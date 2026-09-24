@@ -19,7 +19,7 @@ docker compose pull
 
 ## 3. Starten
 
-1. Startet die lokalen Dienste mit `docker compose up -d`. Wartet, bis der Employee-Service bereit ist.
+1. Startet die lokalen Dienste mit `docker compose up -d`. Prüft mit `docker compose ps`, ob der Employee-Service läuft; wartet auf die Startmeldung in `docker compose logs -f employee` (mit Strg+C beendet ihr nur die Log-Anzeige).
 2. Startet `Lf8StarterApplication` in IntelliJ mit JDK 26 oder führt `./mvnw spring-boot:run` aus. Die App läuft auf Port 8080.
 3. Führt `GetToken.http` im IntelliJ HTTP Client aus. Die Datei speichert das Zugriffstoken automatisch als `{{token}}`.
 4. Führt die Beispiele aus `SampleRequests.http` aus: Hello anlegen, danach bei Bedarf die erhaltene ID für DELETE einsetzen; Begrüßung und direkte Employee-Aufrufe testen.
@@ -28,7 +28,7 @@ Zum Stoppen der Container: `docker compose down`. Die App stoppt ihr separat in 
 
 ## 4. Swagger
 
-Öffnet <http://localhost:8080/swagger>. Klickt auf **Authorize** und fügt das `access_token` aus der Antwort von `GetToken.http` ein, **ohne** das Wort „Bearer“. Die API-Beschreibung gibt es auch unter <http://localhost:8080/v3/api-docs>.
+Öffnet <http://localhost:8080/swagger>; die Adresse leitet auf die Swagger-UI unter `/swagger-ui/index.html` weiter. Klickt auf **Authorize** und fügt das `access_token` aus der Antwort von `GetToken.http` ein, **ohne** das Wort „Bearer“. Die API-Beschreibung gibt es auch unter <http://localhost:8080/v3/api-docs>.
 
 ## 5. Dienste und Ports
 
@@ -50,13 +50,13 @@ Die Werte stehen auch in `compose.yml` und `src/main/resources/application.prope
 
 ## 7. Aufbau des Codes
 
-- `hello/`: Entity, Repository, Service, DTOs, Mapper und Controller – eine vollständige kleine REST-Kette. Die Suche läuft über `GET /hello?message=…`.
+- `hello/`: Entity, Repository, Service, DTOs, Mapper und Controller – eine vollständige kleine REST-Kette. Die Suche läuft über `GET /hello?message=…`; `GET /hello/{id}` ruft einen Eintrag anhand der ID ab.
 - `employee/`: `EmployeeClient.findById(long)` ruft den fremden Dienst auf und reicht das JWT der eingehenden Anfrage weiter. Ergänzt weitere Methoden nach diesem Muster: URL aufrufen, Token mitsenden und eine fehlende Antwort gezielt behandeln.
 - `common/`: Fehlerantworten für Validierung, unbekannte IDs und nicht erreichbare Dienste.
 - `security/`: JWT-Schutz; `/welcome` und Swagger/OpenAPI sind ohne Token erreichbar.
 - `config/`: RestClient und OpenAPI-Konfiguration.
 
-`GET /hello/greeting/{employeeId}` zeigt, wie aus einer fremden Antwort eine eigene Antwort wird: Mitarbeiter gefunden → Begrüßung; unbekannte ID → 404; Dienst nicht erreichbar → 503.
+`HelloService.greet` zeigt, wo Prüfungen gegen den Employee-Service stehen: `GET /hello/greeting/{employeeId}` führt von einer fremden Antwort zur eigenen Antwort: Mitarbeiter gefunden → Begrüßung; unbekannte ID → 404; Dienst nicht erreichbar → 503.
 
 ## 8. Tests
 
@@ -70,7 +70,9 @@ Docker muss laufen, **`docker compose up` ist für Tests nicht nötig**: Testcon
 
 | Symptom | Ursache | Lösung |
 | --- | --- | --- |
-| „port is already allocated“ | Port 8080, 8089, 9000 oder 5433 ist belegt | Freien Host-Port wählen; zugehörige URLs in `compose.yml`, `application.properties` und den HTTP-Dateien zusammen anpassen. |
+| „Port 8080 was already in use“ beim App-Start | Ein anderes Programm belegt den App-Port 8080 | Programm beenden oder `server.port` in `application.properties` ändern und die App-URLs in den HTTP-Dateien anpassen. |
+| „port is already allocated“ beim Compose-Start | Docker-Host-Port 8089, 9000 oder 5433 ist belegt | Freien Host-Port in `compose.yml` wählen; zugehörige URLs in `application.properties` und den HTTP-Dateien anpassen. Bei 9000 auch den Hinweis in `OpenApiConfig` ändern. |
 | 401 bei geschützten Endpunkten | Token fehlt oder ist abgelaufen | `GetToken.http` erneut ausführen, dann den Request wiederholen. |
-| 503 bei der Begrüßung | Employee-Service ist nicht erreichbar | `docker compose up -d` prüfen und auf den Start des Employee-Service warten. |
+| 503 bei der Begrüßung | Employee-Service ist nicht erreichbar, startet noch oder lehnt das Token ab | `docker compose ps` und `docker compose logs employee` prüfen; bei abgelaufenem Token `GetToken.http` erneut ausführen. |
+| 500 mit Spalten-/Constraint-Fehler nach Änderung einer Entity | `ddl-auto=update` lässt alte Datenbankspalten stehen | `docker compose down -v` löscht beide Datenbanken; danach `docker compose up -d`. |
 | Beispieldaten zurücksetzen | Alte Daten liegen in den Volumes | `docker compose down -v` löscht **beide** Datenbanken; anschließend `docker compose up -d`. |
