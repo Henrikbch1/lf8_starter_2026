@@ -14,12 +14,14 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @AutoConfigureMockMvc
 @Import(IntegrationDatabaseConfig.class)
 public abstract class AbstractIntegrationTest {
+
     @MockitoBean
     protected EmployeeClient employeeClient;
 }
 
 @TestConfiguration
 class IntegrationDatabaseConfig {
+
     @Bean
     @ServiceConnection
     PostgreSQLContainer<?> postgres() {
