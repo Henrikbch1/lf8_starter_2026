@@ -20,7 +20,7 @@ docker compose pull
 ## 3. Starten
 
 1. Startet die lokalen Dienste mit `docker compose up -d`. Prüft mit `docker compose ps`, ob der Employee-Service läuft; wartet auf die Startmeldung in `docker compose logs -f employee` (mit Strg+C beendet ihr nur die Log-Anzeige).
-2. Startet `Lf8StarterApplication` in IntelliJ mit JDK 26 oder führt `./mvnw spring-boot:run` aus. Die App läuft auf Port 8080.
+2. Startet `Lf8StarterApplication` in IntelliJ mit JDK 26 (grüner Pfeil neben der `main`-Methode). Die App läuft auf Port 8080.
 3. Führt `GetToken.http` im IntelliJ HTTP Client aus. Die Datei speichert das Zugriffstoken automatisch als `{{token}}`.
 4. Führt die Beispiele aus `SampleRequests.http` aus: Hello anlegen, danach bei Bedarf die erhaltene ID für DELETE einsetzen; Begrüßung und direkte Employee-Aufrufe testen.
 
@@ -60,8 +60,14 @@ Die Werte stehen auch in `compose.yml` und `src/main/resources/application.prope
 
 ## 8. Tests
 
+In IntelliJ: Rechtsklick auf den Ordner `src/test/java` → *Run All Tests*. Einen einzelnen Test
+startet ihr mit dem grünen Pfeil neben der Testmethode oder der Testklasse.
+
+Oder auf der Konsole, ohne installiertes Maven (der Maven-Wrapper liegt im Projekt):
+
 ```bash
-./mvnw verify
+./mvnw verify        # Linux, macOS
+mvnw.cmd verify      # Windows
 ```
 
 Docker muss laufen, **`docker compose up` ist für Tests nicht nötig**: Testcontainers startet eine eigene PostgreSQL mit `@ServiceConnection`. Die Hello-Tests erben `@MockitoBean EmployeeClient` aus `AbstractIntegrationTest` und nutzen `jwt()` für authentifizierte Anfragen statt `@WithMockUser`. `EmployeeClientTest` simuliert den fremden HTTP-Dienst ohne Compose.
