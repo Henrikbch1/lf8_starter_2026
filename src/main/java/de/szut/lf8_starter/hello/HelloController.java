@@ -2,10 +2,6 @@ package de.szut.lf8_starter.hello;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
-
-import de.szut.lf8_starter.employee.EmployeeClient;
-import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -27,12 +23,9 @@ public class HelloController {
 
     private final HelloService service;
     private final HelloMapper mapper;
-    private final EmployeeClient employees;
-
-    public HelloController(HelloService service, HelloMapper mapper, EmployeeClient employees) {
+    public HelloController(HelloService service, HelloMapper mapper) {
         this.service = service;
         this.mapper = mapper;
-        this.employees = employees;
     }
 
     @Operation(summary = "Hello anlegen")
@@ -65,6 +58,17 @@ public class HelloController {
         return hellos.stream().map(mapper::toDto).toList();
     }
 
+    @Operation(summary = "Ein Hello abrufen")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200"),
+            @ApiResponse(responseCode = "401"),
+            @ApiResponse(responseCode = "404")
+    })
+    @GetMapping("/{id}")
+    public HelloGetDto findById(@PathVariable long id) {
+        return mapper.toDto(service.findById(id));
+    }
+
     @Operation(summary = "Hello löschen")
     @ApiResponses({
             @ApiResponse(responseCode = "204"),
@@ -85,9 +89,7 @@ public class HelloController {
             @ApiResponse(responseCode = "503")
     })
     @GetMapping("/greeting/{employeeId}")
-    public Map<String, String> greeting(@PathVariable long employeeId) {
-        var employee = employees.findById(employeeId)
-                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
-        return Map.of("message", "Hallo " + employee.firstName() + " " + employee.lastName());
+    public GreetingDto greeting(@PathVariable long employeeId) {
+        return service.greet(employeeId);
     }
 }
