@@ -1,0 +1,7 @@
+### Zuerst ausführen; Antwort-Handler speichert das Token für SampleRequests.http.
+POST http://localhost:9000/default/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id=lf8-starter&client_secret=lf8-starter
+
+> {% client.global.set('token', response.body.access_token); %}

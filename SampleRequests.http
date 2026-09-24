@@ -1,0 +1,41 @@
+### Zuerst GetToken.http ausführen.
+GET http://localhost:8080/welcome
+
+###
+GET http://localhost:8080/hello
+Authorization: Bearer {{token}}
+
+###
+POST http://localhost:8080/hello
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"message":"Hallo LF8"}
+
+###
+GET http://localhost:8080/hello?message=Hallo%20LF8
+Authorization: Bearer {{token}}
+
+###
+GET http://localhost:8080/hello/findByMessage?message=Hallo%20LF8
+Authorization: Bearer {{token}}
+
+### ID aus der POST-Antwort einsetzen.
+DELETE http://localhost:8080/hello/1
+Authorization: Bearer {{token}}
+
+###
+GET http://localhost:8080/hello/greeting/1
+Authorization: Bearer {{token}}
+
+###
+GET http://localhost:8080/hello/greeting/999
+Authorization: Bearer {{token}}
+
+###
+GET http://localhost:8089/employees
+Authorization: Bearer {{token}}
+
+###
+GET http://localhost:8089/qualifications
+Authorization: Bearer {{token}}
