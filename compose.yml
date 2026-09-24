@@ -1,5 +1,5 @@
-# Nur Container dieses Projekts verwalten: docker compose -p lf8starter up -d
-# Stoppen: docker compose -p lf8starter down; mit -v werden auch Daten geloescht.
+# Starten: docker compose up -d
+# Stoppen: docker compose down; mit -v werden auch Daten geloescht.
 services:
   projekt-db:
     image: postgres:17.6
