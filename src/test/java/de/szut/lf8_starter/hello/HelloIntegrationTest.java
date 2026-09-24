@@ -4,34 +4,18 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import de.szut.lf8_starter.employee.EmployeeClient;
+import de.szut.lf8_starter.AbstractIntegrationTest;
 import de.szut.lf8_starter.employee.EmployeeDto;
 import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
 import java.util.List;
 import java.util.Optional;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.anyLong;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(HelloIntegrationTest.DbConfig.class)
-class HelloIntegrationTest {
-    @TestConfiguration static class DbConfig {
-        @Bean @ServiceConnection PostgreSQLContainer<?> postgres() { return new PostgreSQLContainer<>("postgres:17.6"); }
-    }
-    @MockitoBean EmployeeClient employeeClient;
+class HelloIntegrationTest extends AbstractIntegrationTest {
     @Autowired MockMvc mvc;
 
     @Test void create201AndValidation400() throws Exception {

@@ -10,7 +10,11 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
-/** Ruft den lokalen Mitarbeiterdienst auf und reicht das JWT der Anfrage weiter. */
+/**
+ * Ruft den lokalen Mitarbeiterdienst auf und reicht das JWT der eingehenden Anfrage weiter.
+ * Weitere Aufrufe können nach dem Muster von {@link #findById(long)} ergänzt werden:
+ * Token mitsenden und HTTP-Fehler gezielt in eigene Antworten übersetzen.
+ */
 @Component
 public class EmployeeClient {
     private final RestClient client;

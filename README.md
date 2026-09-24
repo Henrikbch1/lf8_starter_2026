@@ -4,7 +4,7 @@ Voraussetzungen: JDK 26, Docker mit Compose, IntelliJ IDEA (HTTP Client und Mave
 
 ## Starten
 
-Im Projektverzeichnis zuerst `docker compose -p lf8starter pull`, danach `docker compose -p lf8starter up -d`. In IntelliJ `Lf8StarterApplication` mit JDK 26 starten oder im Terminal mit `./mvnw spring-boot:run`. Zum Stoppen der Container: `docker compose -p lf8starter down`. Nur wenn alle Daten verworfen werden sollen: `docker compose -p lf8starter down -v` (setzt beide Datenbanken zurück). Immer `-p lf8starter` verwenden, um andere Projekte nicht anzufassen.
+**Vorbereitung zu Hause:** Im Projektverzeichnis `docker compose -p lf8starter pull` ausführen, solange Zeit für die großen Images ist. Zum Starten danach `docker compose -p lf8starter up -d` ausführen. In IntelliJ `Lf8StarterApplication` mit JDK 26 starten oder im Terminal mit `./mvnw spring-boot:run`. Zum Stoppen der Container: `docker compose -p lf8starter down`. Nur wenn alle Daten verworfen werden sollen: `docker compose -p lf8starter down -v` (setzt beide Datenbanken zurück). Immer `-p lf8starter` verwenden, um andere Projekte nicht anzufassen.
 
 `GetToken.http` im IntelliJ HTTP Client ausführen: ein client_credentials-Token wird automatisch als `{{token}}` für `SampleRequests.http` gespeichert. Für Swagger unter <http://localhost:8080/swagger> oben **Authorize** wählen und das access_token ohne „Bearer“ einfügen. Die OpenAPI-Beschreibung steht unter <http://localhost:8080/v3/api-docs>.
 
