@@ -2,6 +2,12 @@
 
 Dieses Gerüst zeigt Hello durch alle Schichten und den Aufruf eines Employee-Service. Die Projektverwaltung mit ihren eigenen Fachregeln entwickelt ihr selbst.
 
+> **Projektauftrag:** Startet mit den [Arbeitsaufträgen](aufgabe/04-arbeitsauftraege.md). Dort
+> sind auch [Ausgangssituation](aufgabe/01-ausgangssituation.md),
+> [Anforderungsdefinition](aufgabe/02-anforderungsdefinition.md) und
+> [Musterstory](aufgabe/03-musterstory.md) verlinkt. Diese README ist die technische Anleitung
+> für den Starter.
+
 ## 1. Voraussetzungen
 
 - JDK 26 und IntelliJ IDEA mit Maven-Unterstützung und HTTP Client
