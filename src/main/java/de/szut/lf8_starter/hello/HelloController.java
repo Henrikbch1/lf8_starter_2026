@@ -2,6 +2,7 @@ package de.szut.lf8_starter.hello;
 
 import java.net.URI;
 import java.util.List;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,6 +24,7 @@ public class HelloController {
 
     private final HelloService service;
     private final HelloMapper mapper;
+
     public HelloController(HelloService service, HelloMapper mapper) {
         this.service = service;
         this.mapper = mapper;

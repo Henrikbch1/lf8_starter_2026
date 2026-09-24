@@ -4,7 +4,6 @@ import java.util.List;
 
 import de.szut.lf8_starter.employee.EmployeeClient;
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
-
 import org.springframework.stereotype.Service;
 
 @Service
