@@ -8,11 +8,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(IntegrationDatabaseConfig.class)
+// Jeden Test zurückrollen: sonst wandern Datensätze von Testklasse zu Testklasse.
+@Transactional
 public abstract class AbstractIntegrationTest {
 
     @MockitoBean
@@ -24,7 +27,7 @@ class IntegrationDatabaseConfig {
 
     @Bean
     @ServiceConnection
-    PostgreSQLContainer<?> postgres() {
-        return new PostgreSQLContainer<>("postgres:17.6");
+    PostgreSQLContainer postgres() {
+        return new PostgreSQLContainer("postgres:17.6");
     }
 }

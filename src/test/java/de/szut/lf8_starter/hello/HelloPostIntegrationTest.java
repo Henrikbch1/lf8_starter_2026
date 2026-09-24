@@ -51,6 +51,16 @@ class HelloPostIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void createWithoutMessageReturns400() throws Exception {
+        mockMvc.perform(post("/hello")
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.message").exists());
+    }
+
+    @Test
     void createWithoutTokenReturns401() throws Exception {
         // Arrange
         String request = """

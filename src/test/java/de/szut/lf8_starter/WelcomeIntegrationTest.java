@@ -2,6 +2,7 @@ package de.szut.lf8_starter;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +28,17 @@ class WelcomeIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void swaggerWithoutTokenReturns200() throws Exception {
-        // Act & Assert
+    void swaggerWithoutTokenRedirectsToUi() throws Exception {
         mockMvc.perform(get("/swagger"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/swagger-ui/index.html*"));
+    }
+
+    @Test
+    void swaggerUiResourcesWithoutTokenReturn200() throws Exception {
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/swagger-ui/swagger-ui.css"))
                 .andExpect(status().isOk());
     }
 }

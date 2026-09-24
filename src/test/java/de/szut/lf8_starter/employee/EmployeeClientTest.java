@@ -1,11 +1,16 @@
 package de.szut.lf8_starter.employee;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withResourceNotFound;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.net.ConnectException;
 import java.time.Instant;
 import java.util.Map;
 
@@ -57,6 +62,33 @@ class EmployeeClientTest {
         // Assert
         assertThat(employee.skillSet()).containsExactly(new QualificationDto(2L, "Java"));
         assertThat(employee.firstName()).isEqualTo("Max");
+    }
+
+    @Test
+    void maps401ToUnavailableWithStatus() {
+        server.expect(requestTo("http://localhost:8089/employees/1"))
+                .andRespond(withUnauthorizedRequest());
+        assertThatThrownBy(() -> client.findById(1))
+                .isInstanceOf(EmployeeServiceUnavailableException.class)
+                .hasMessageContaining("401");
+    }
+
+    @Test
+    void maps500ToUnavailableWithStatus() {
+        server.expect(requestTo("http://localhost:8089/employees/1"))
+                .andRespond(withServerError());
+        assertThatThrownBy(() -> client.findById(1))
+                .isInstanceOf(EmployeeServiceUnavailableException.class)
+                .hasMessageContaining("500");
+    }
+
+    @Test
+    void mapsConnectionFailureToUnavailable() {
+        server.expect(requestTo("http://localhost:8089/employees/1"))
+                .andRespond(withException(new ConnectException("Verbindung verweigert")));
+        assertThatThrownBy(() -> client.findById(1))
+                .isInstanceOf(EmployeeServiceUnavailableException.class)
+                .hasMessageContaining("nicht erreichbar");
     }
 
     @Test
