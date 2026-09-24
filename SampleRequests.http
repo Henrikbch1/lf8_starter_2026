@@ -16,10 +16,6 @@ Content-Type: application/json
 GET http://localhost:8080/hello?message=Hallo%20LF8
 Authorization: Bearer {{token}}
 
-###
-GET http://localhost:8080/hello/findByMessage?message=Hallo%20LF8
-Authorization: Bearer {{token}}
-
 ### ID aus der POST-Antwort einsetzen.
 DELETE http://localhost:8080/hello/1
 Authorization: Bearer {{token}}

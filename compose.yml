@@ -16,6 +16,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  # Ersetzt den zentralen Anmeldedienst der HiTec GmbH: Hier holen wir Tokens,
+  # deren Signatur beide Services mit den öffentlichen Schlüsseln prüfen.
   auth:
     image: ghcr.io/navikt/mock-oauth2-server:2.1.10
     ports:
