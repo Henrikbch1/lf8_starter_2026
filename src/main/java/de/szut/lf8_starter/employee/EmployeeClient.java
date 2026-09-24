@@ -3,7 +3,7 @@ package de.szut.lf8_starter.employee;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
@@ -34,16 +34,16 @@ public class EmployeeClient {
                     .retrieve()
                     .body(EmployeeDto.class);
             return Optional.ofNullable(employee);
+        } catch (HttpClientErrorException.NotFound exception) {
+            return Optional.empty();
         } catch (RestClientResponseException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            }
-            throw exception;
+            throw new EmployeeServiceUnavailableException(exception.getStatusCode(), exception);
         } catch (ResourceAccessException exception) {
             throw new EmployeeServiceUnavailableException(exception);
         }
     }
 
+    /** Nur innerhalb eines Requests mit JWT aufrufbar, nicht etwa aus einem CommandLineRunner. */
     private String currentToken() {
         if (SecurityContextHolder.getContext().getAuthentication() instanceof JwtAuthenticationToken jwt) {
             return jwt.getToken().getTokenValue();
