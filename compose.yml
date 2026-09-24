@@ -1,0 +1,53 @@
+# Nur Container dieses Projekts verwalten: docker compose -p lf8starter up -d
+# Stoppen: docker compose -p lf8starter down; mit -v werden auch Daten geloescht.
+services:
+  projekt-db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: lf8_starter
+      POSTGRES_USER: lf8_starter
+      POSTGRES_PASSWORD: geheim
+    ports:
+      - "5433:5432" # Webshop nutzt bereits Host-Port 5432.
+    volumes:
+      - projekt-daten:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lf8_starter -d lf8_starter"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  auth:
+    image: ghcr.io/navikt/mock-oauth2-server:2.1.10
+    ports:
+      - "9000:8080"
+  employee-db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: employee_db
+      POSTGRES_USER: employee
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - employee-daten:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U employee -d employee_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  employee:
+    image: berndheidemann/employee-management-service-authentik:1.0.2
+    environment:
+      spring.datasource.url: jdbc:postgresql://employee-db:5432/employee_db
+      spring.datasource.username: employee
+      spring.datasource.password: secret
+      authentik.jwk-set-uri: http://auth:8080/default/jwks
+    ports:
+      - "8089:8089"
+    depends_on:
+      employee-db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    restart: on-failure
+volumes:
+  projekt-daten:
+  employee-daten:
