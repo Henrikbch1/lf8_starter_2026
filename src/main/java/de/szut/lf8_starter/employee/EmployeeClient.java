@@ -1,6 +1,7 @@
 package de.szut.lf8_starter.employee;
 
 import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestClientResponseException;
  */
 @Component
 public class EmployeeClient {
+
     private final RestClient client;
 
     public EmployeeClient(RestClient.Builder builder, @Value("${employee-service.url}") String baseUrl) {
@@ -26,14 +28,19 @@ public class EmployeeClient {
     /** Sucht einen Mitarbeiter; eine unbekannte ID liefert Optional.empty(). */
     public Optional<EmployeeDto> findById(long id) {
         try {
-            return Optional.ofNullable(client.get().uri("/employees/{id}", id)
+            EmployeeDto employee = client.get()
+                    .uri("/employees/{id}", id)
                     .headers(headers -> headers.setBearerAuth(currentToken()))
-                    .retrieve().body(EmployeeDto.class));
-        } catch (RestClientResponseException ex) {
-            if (ex.getStatusCode() == HttpStatus.NOT_FOUND) return Optional.empty();
-            throw ex;
-        } catch (ResourceAccessException ex) {
-            throw new EmployeeServiceUnavailableException(ex);
+                    .retrieve()
+                    .body(EmployeeDto.class);
+            return Optional.ofNullable(employee);
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            }
+            throw exception;
+        } catch (ResourceAccessException exception) {
+            throw new EmployeeServiceUnavailableException(exception);
         }
     }
 
