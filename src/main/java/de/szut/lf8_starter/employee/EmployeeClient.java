@@ -1,0 +1,42 @@
+package de.szut.lf8_starter.employee;
+
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+
+/** Ruft den lokalen Mitarbeiterdienst auf und reicht das JWT der Anfrage weiter. */
+@Component
+public class EmployeeClient {
+    private final RestClient client;
+
+    public EmployeeClient(RestClient.Builder builder, @Value("${employee-service.url}") String baseUrl) {
+        this.client = builder.baseUrl(baseUrl).build();
+    }
+
+    /** Sucht einen Mitarbeiter; eine unbekannte ID liefert Optional.empty(). */
+    public Optional<EmployeeDto> findById(long id) {
+        try {
+            return Optional.ofNullable(client.get().uri("/employees/{id}", id)
+                    .headers(headers -> headers.setBearerAuth(currentToken()))
+                    .retrieve().body(EmployeeDto.class));
+        } catch (RestClientResponseException ex) {
+            if (ex.getStatusCode() == HttpStatus.NOT_FOUND) return Optional.empty();
+            throw ex;
+        } catch (ResourceAccessException ex) {
+            throw new EmployeeServiceUnavailableException(ex);
+        }
+    }
+
+    private String currentToken() {
+        if (SecurityContextHolder.getContext().getAuthentication() instanceof JwtAuthenticationToken jwt) {
+            return jwt.getToken().getTokenValue();
+        }
+        throw new IllegalStateException("JWT zur Weitergabe fehlt");
+    }
+}
