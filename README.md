@@ -64,6 +64,8 @@ Die Werte stehen auch in `compose.yml` und `src/main/resources/application.prope
 
 `HelloService.greet` zeigt, wo Prüfungen gegen den Employee-Service stehen: `GET /hello/greeting/{employeeId}` führt von einer fremden Antwort zur eigenen Antwort: Mitarbeiter gefunden → Begrüßung; unbekannte ID → 404; Dienst nicht erreichbar → 503.
 
+Wie Token, Anmeldedienst, euer Service und Employee-Service zusammenspielen, zeigt die interaktive Grafik [`docs/oauth-ablauf.html`](docs/oauth-ablauf.html). Öffnet sie lokal im Browser und wählt oben „Unser Projekt“.
+
 ## 8. Tests
 
 In IntelliJ: Rechtsklick auf den Ordner `src/test/java` → *Run All Tests*. Einen einzelnen Test

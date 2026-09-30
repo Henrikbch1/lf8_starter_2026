@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OAuth2 &amp; OIDC — interaktiver Ablauf</title>
+<style>
+  :root {
+    --owner: #7c3aed;
+    --client: #2563eb;
+    --auth: #d97706;
+    --resource: #059669;
+    --employee: #0891b2;
+    --bg: #f8fafc;
+    --panel: #ffffff;
+    --border: #cbd5e1;
+    --text: #1e293b;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 1rem 1.5rem 0.5rem;
+    text-align: center;
+  }
+  h1 { margin: 0 0 0.5rem; font-size: 1.4rem; }
+  .mode-toggle {
+    display: inline-flex;
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+  .mode-toggle button {
+    border: none;
+    background: transparent;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .mode-toggle button.active {
+    background: var(--text);
+    color: white;
+  }
+  .stage-wrap {
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+  .main-row {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+    margin-bottom: 1rem;
+  }
+  .stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 420px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .role {
+    position: absolute;
+    width: 220px;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: white;
+    text-align: center;
+    transition: box-shadow 0.3s, border-color 0.3s;
+  }
+  .role .icon { width: 28px; height: 28px; margin: 0 auto 0.3rem; }
+  .role .icon svg { width: 100%; height: 100%; display: block; }
+  .role .name { font-weight: 700; font-size: 1rem; }
+  .role .sub { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+  .role .example { font-size: 0.72rem; font-style: italic; color: var(--muted); opacity: 0.85; margin-top: 0.35rem; }
+  .role.active { box-shadow: 0 0 0 4px rgba(0,0,0,0.06); }
+  .role.unused { opacity: 0.5; border-style: dashed; }
+  #role-owner    { left: 2%;  bottom: 6%; border-color: var(--owner); }
+  #role-client   { left: 2%;  top: 6%;    border-color: var(--client); }
+  #role-resource { right: 2%; top: 6%;    border-color: var(--resource); }
+  #role-auth     { right: 2%; bottom: 6%; border-color: var(--auth); }
+  #role-owner .name, #role-owner .icon       { color: var(--owner); }
+  #role-client .name, #role-client .icon     { color: var(--client); }
+  #role-resource .name, #role-resource .icon { color: var(--resource); }
+  #role-auth .name, #role-auth .icon         { color: var(--auth); }
+
+  svg.overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .connector { stroke: #94a3b8; stroke-width: 2.5; fill: none; }
+  .packet { fill: #1e293b; }
+
+  .step-label {
+    position: absolute;
+    top: 46%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  #role-employee { right: 2%; top: 6%; border-color: var(--employee); display: none; }
+  #role-employee .name, #role-employee .icon { color: var(--employee); }
+  .stage.project #role-employee { display: block; }
+  .stage.project #role-resource { right: auto; left: 50%; transform: translateX(-50%); }
+  .stage.project #role-auth { right: auto; left: 50%; transform: translateX(-50%); }
+  .trust { stroke: var(--auth); stroke-width: 1.5; stroke-dasharray: 4 5; fill: none; opacity: 0.55; }
+  .trust-label { font-size: 11px; font-weight: 600; fill: var(--auth); paint-order: stroke; stroke: var(--panel); stroke-width: 4px; }
+  .token-demo {
+    display: none;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .token-demo.visible { display: block; }
+  .token-demo summary { cursor: pointer; font-weight: 700; }
+  .token-demo summary span { font-weight: 400; color: var(--muted); }
+  .token-raw {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    word-break: break-all;
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    margin: 0.75rem 0;
+  }
+  .jwt-h { color: #dc2626; }
+  .jwt-p { color: #7c3aed; }
+  .jwt-s { color: #0891b2; }
+  .token-parts { display: grid; grid-template-columns: 1fr 1.6fr 1fr; gap: 0.75rem; }
+  .token-parts h3 { font-size: 0.85rem; margin: 0 0 0.35rem; }
+  .token-parts pre {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    margin: 0;
+    white-space: pre-wrap;
+  }
+  .token-parts .note { font-size: 0.85rem; line-height: 1.45; color: #334155; margin: 0; }
+  .token-parts .c { color: var(--muted); }
+  .token-check { font-size: 0.9rem; line-height: 1.5; margin: 0.75rem 0 0; color: #334155; }
+  .token-check strong { color: var(--text); }
+
+  .history {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.6rem;
+    overflow-y: auto;
+    max-height: 420px;
+  }
+  .history-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    padding: 0.45rem 0.6rem;
+    margin-bottom: 0.15rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .history-item.done { color: var(--text); }
+  .history-item.current { background: var(--text); color: white; font-weight: 700; }
+  .history-item:hover { background: #f1f5f9; }
+  .history-item.current:hover { background: var(--text); }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .panel .step-counter { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+  .panel .action { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .panel .data {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.85rem;
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    white-space: pre-wrap;
+    margin-bottom: 0.6rem;
+  }
+  .panel .sprich {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    border-left: 4px solid var(--text);
+    padding-left: 0.75rem;
+    color: #334155;
+  }
+  .panel .sprich::before { content: "„"; }
+  .panel .sprich::after { content: "“"; }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 2rem;
+  }
+  .controls button {
+    font-size: 1rem;
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    cursor: pointer;
+  }
+  .controls button:disabled { opacity: 0.4; cursor: default; }
+  .controls .count { font-size: 0.9rem; color: var(--muted); min-width: 4em; text-align: center; }
+
+  @media (max-width: 820px) {
+    .main-row { flex-direction: column; }
+    .token-parts { grid-template-columns: 1fr; }
+    .history { width: 100%; max-height: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>OAuth2 &amp; OIDC — wer schickt was, an wen, wann</h1>
+  <div class="mode-toggle">
+    <button id="btn-general" class="active">Allgemein</button>
+    <button id="btn-project">Unser Projekt</button>
+  </div>
+</header>
+
+<div class="stage-wrap">
+  <div class="main-row">
+    <div class="stage" id="stage">
+      <svg class="overlay" id="overlay">
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+          </marker>
+        </defs>
+        <path class="trust" id="trust-resource"></path>
+        <path class="trust" id="trust-employee"></path>
+        <text class="trust-label" id="trust-label-resource">JWKS</text>
+        <text class="trust-label" id="trust-label-employee">JWKS</text>
+        <path class="connector" id="connector" marker-end="url(#arrow)"></path>
+        <circle class="packet" id="packet" r="7" opacity="0"></circle>
+      </svg>
+
+      <div class="role" id="role-client">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="16" height="12" rx="2"/>
+            <line x1="2" y1="7" x2="18" y2="7"/>
+            <path d="M14 13l5 2-2 1-1 2z" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <div class="name">Client</div>
+        <div class="sub" id="sub-client">die Anwendung</div>
+        <div class="example" id="example-client"></div>
+      </div>
+      <div class="role" id="role-resource">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6.5C3 5.7 3.7 5 4.5 5H9l2 2.2h8.5c.8 0 1.5.7 1.5 1.5v9c0 .8-.7 1.5-1.5 1.5h-15C3.7 19.2 3 18.5 3 17.7V6.5z"/>
+          </svg>
+        </div>
+        <div class="name">Resource Server</div>
+        <div class="sub" id="sub-resource">liefert die Daten</div>
+        <div class="example" id="example-resource"></div>
+      </div>
+      <div class="role" id="role-auth">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <circle cx="8" cy="12" r="2.3"/>
+            <line x1="13" y1="9.5" x2="19" y2="9.5"/>
+            <line x1="13" y1="13" x2="19" y2="13"/>
+            <line x1="13" y1="15.5" x2="17" y2="15.5"/>
+          </svg>
+        </div>
+        <div class="name">Authorization Server</div>
+        <div class="sub" id="sub-auth">prüft Identität, stellt Tokens aus</div>
+        <div class="example" id="example-auth"></div>
+      </div>
+      <div class="role" id="role-owner">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="3.2"/>
+            <path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/>
+          </svg>
+        </div>
+        <div class="name">Resource Owner</div>
+        <div class="sub" id="sub-owner">die Person</div>
+        <div class="example" id="example-owner"></div>
+      </div>
+
+      <div class="role" id="role-employee">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6.5C3 5.7 3.7 5 4.5 5H9l2 2.2h8.5c.8 0 1.5.7 1.5 1.5v9c0 .8-.7 1.5-1.5 1.5h-15C3.7 19.2 3 18.5 3 17.7V6.5z"/>
+          </svg>
+        </div>
+        <div class="name">Resource Server</div>
+        <div class="sub" id="sub-employee"></div>
+        <div class="example" id="example-employee"></div>
+      </div>
+
+      <div class="step-label" id="step-label"></div>
+
+    </div>
+
+    <div class="history" id="history"></div>
+  </div>
+
+  <div class="panel">
+    <div class="step-counter" id="step-counter"></div>
+    <div class="action" id="action-text"></div>
+    <div class="data" id="data-text"></div>
+    <div class="sprich" id="sprich-text"></div>
+  </div>
+
+
+  <details class="token-demo" id="token-demo">
+    <summary>Token-Beispiel: Was steckt im access_token? <span>(echte Antwort des mock-oauth2-servers auf GetToken.http)</span></summary>
+    <div class="token-raw"><span class="jwt-h">eyJraWQiOiJkZWZhdWx0IiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ</span>.<span class="jwt-p">eyJzdWIiOiJsZjgtc3RhcnRlciIsImF1ZCI6ImRlZmF1bHQiLCJuYmYiOjE3OTA3NzA3NzYsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMC9kZWZhdWx0IiwiZXhwIjoxNzkwNzc0Mzc2LCJpYXQiOjE3OTA3NzA3NzYsImp0aSI6Ijc1ZWI0MmY3LTc2ZmQtNDY5NS05Zjg4LTE1ZWY5NDMyNDJkZiIsInRpZCI6ImRlZmF1bHQifQ</span>.<span class="jwt-s">E7jTPX4o6SUluh3GfOgejSxbYyiqGoOEfEfNmpmR0XmYm25uo-UuN5uVIGbvpo4aH_zZr1allN-JkQ7MohObMot_NtpAMKPwDVnriVjDPe9iX94mgXaUnuo7s5DA11SAok6Y1-bMc-0ResVSI6t-MzzhFnX3e4d5Orgs7HCZueCMHreYNKgextssQ4dxhaBUVc8BlmzNPJu7mCKNH2anMfi5U56x3VqY6E5DDOKZsnHXmV0THVG8HMxVFtGQ81457KDHSJu2zGJlhBMYTUa2LeDmQZJeIhDRHU-vBj9L5hkqKZgBn6j6G81z7_eRu6bVy14WRxQqkG0IMQskKaEXog</span></div>
+    <div class="token-parts">
+      <div>
+        <h3 class="jwt-h">Header</h3>
+        <pre>{
+  "kid": "default",
+  "typ": "JWT",
+  "alg": "RS256"
+}</pre>
+        <p class="note">RS256: signiert mit dem privaten RSA-Schlüssel des Anmeldedienstes. <code>kid</code> sagt, welcher öffentliche Schlüssel aus <code>/default/jwks</code> passt.</p>
+      </div>
+      <div>
+        <h3 class="jwt-p">Payload</h3>
+        <pre>{
+  "sub": "lf8-starter",      <span class="c">← wer: die Client-ID</span>
+  "aud": "default",
+  "nbf": 1790770776,
+  "iss": "http://localhost:9000/default",
+                             <span class="c">← Aussteller</span>
+  "exp": 1790774376,         <span class="c">← 30.09.2026 15:19:36</span>
+  "iat": 1790770776,         <span class="c">← 30.09.2026 14:19:36</span>
+  "jti": "75eb42f7-76fd-4695-9f88-15ef943242df",
+  "tid": "default"
+}</pre>
+        <p class="note">Nur Base64, nicht verschlüsselt: Jeder kann das lesen. Zwischen <code>iat</code> und <code>exp</code> liegt eine Stunde, danach gibt es 401.</p>
+      </div>
+      <div>
+        <h3 class="jwt-s">Signatur</h3>
+        <p class="note">Wird aus Header und Payload berechnet. Ändert jemand auch nur ein Zeichen, etwa <code>exp</code>, passt sie nicht mehr: 401.</p>
+        <p class="note" style="margin-top:0.5rem">Der Mock prüft Client-ID und Secret nicht und signiert mit einem <strong>fest eingebauten, öffentlich bekannten</strong> Schlüssel. Fürs Testen praktisch, in Produktion wäre das fatal.</p>
+      </div>
+    </div>
+    <p class="token-check"><strong>Was eure Services prüfen:</strong> Signatur (Schritt 5 und 7) und Zeitfenster <code>nbf</code>/<code>exp</code>. <code>iss</code> und <code>aud</code> prüfen sie nicht, weil der Starter nur <code>jwk-set-uri</code> einstellt.</p>
+  </details>
+
+  <div class="controls">
+    <button id="btn-prev">← Zurück</button>
+    <span class="count" id="count-text"></span>
+    <button id="btn-next">Weiter →</button>
+  </div>
+</div>
+
+<script>
+const GENERAL_LABELS = {
+  client: ['Client', 'die Anwendung, die einloggt', 'Beispiel: DruckFix'],
+  resource: ['Resource Server', 'liefert die eigentlichen Daten', 'Beispiel: PixelCloud (Fotos)'],
+  auth: ['Authorization Server', 'prüft Identität, stellt Tokens aus', 'Beispiel: PixelCloud (Login)'],
+  owner: ['Resource Owner', 'die Person', 'Beispiel: ihr'],
+};
+const PROJECT_LABELS = {
+  client: ['Client', 'IntelliJ HTTP Client: GetToken.http holt das Token, SampleRequests.http schickt es mit', ''],
+  resource: ['Resource Server', 'euer Service (Projektverwaltung, :8080)', ''],
+  employee: ['Resource Server', 'Employee-Service (bereits vorhanden, :8089)', ''],
+  auth: ['Authorization Server', 'mock-oauth2-server — lokal, docker compose, :9000', ''],
+  owner: ['Resource Owner', 'hier keine Person beteiligt', 'client_credentials: die Anwendung meldet sich selbst an'],
+};
+
+const GENERAL_STEPS = [
+  { from: 'client', to: null, label: '0. Vorbereitung (lokal)',
+    data: 'code_verifier = Zufallsstring\ncode_challenge = SHA256(code_verifier)',
+    sprich: 'Bevor überhaupt etwas rausgeht, erzeugt der Client zwei zusammengehörige Werte. Nur er kennt den code_verifier — das wird gleich wichtig.' },
+  { from: 'client', to: 'auth', label: '1. GET /authorize',
+    data: 'client_id, redirect_uri, scope,\ncode_challenge, code_challenge_method=S256',
+    sprich: 'Der Client schickt eine Anfrage an den Authorization Server — mit dem Hash aus Schritt 0, nicht mit dem Original. Der Browser wird umgeleitet.' },
+  { from: 'auth', to: 'owner', label: '2. Login-Formular',
+    data: '(zeigt Anmeldemaske)',
+    sprich: 'Der Nutzer sieht jetzt eine Login-Seite — die des Authorization Servers, nicht die der Anwendung.' },
+  { from: 'owner', to: 'auth', label: '3. Zugangsdaten eingeben',
+    data: 'username, password',
+    sprich: 'Erst hier, direkt beim Authorization Server, gibt der Nutzer sein Passwort ein. Der Client bekommt es nie zu sehen.' },
+  { from: 'auth', to: 'client', label: '4. Redirect mit Code',
+    data: 'authorization_code (kurzlebig, einmalig einlösbar)',
+    sprich: 'Zurück beim Client — mit einem Code, der nur wenige Minuten gültig ist.' },
+  { from: 'client', to: 'auth', label: '5. POST /token',
+    data: 'code, code_verifier (jetzt im Klartext!),\nclient_id, redirect_uri',
+    sprich: 'Jetzt taucht der code_verifier zum ersten Mal im Klartext auf. Der Server prüft: Passt der Hash zum code_challenge von vorhin?' },
+  { from: 'auth', to: 'client', label: '6. Token-Antwort',
+    data: 'access_token (JWT), evtl. id_token, refresh_token',
+    sprich: 'Erst nach dieser Prüfung gibt es den eigentlichen Token.' },
+  { from: 'client', to: 'resource', label: '7. GET /resource',
+    data: 'Authorization: Bearer <access_token>',
+    sprich: 'Ab hier betreten wir den Resource Server — das ist der Teil, um den es in eurem Projekt geht.' },
+  { from: 'resource', to: null, label: '8. Token prüfen',
+    data: 'Signatur gegen öffentlichen Schlüssel prüfen\n— oder: Rückfrage beim Authorization Server (Introspection)',
+    sprich: 'Zwei Wege sind hier möglich. Welchen wir nehmen, zeigt der Projekt-Teil.' },
+  { from: 'resource', to: 'client', label: '9. Antwort',
+    data: 'angefragte Ressource (JSON)',
+    sprich: 'Nur wenn Schritt 8 positiv war, kommt hier tatsächlich etwas zurück.' },
+];
+
+const PROJECT_STEPS = [
+  { from: 'client', to: 'auth', label: '1. POST /default/token',
+    data: 'grant_type=client_credentials\nclient_id=lf8-starter\nclient_secret=lf8-starter',
+    sprich: 'GetToken.http meldet sich als Anwendung an, nicht als Person. Kein Browser, kein Login-Formular, kein Passwort eines Nutzers: Das ist der Client-Credentials-Grant. Deshalb bleibt der Resource Owner in diesem Ablauf grau.' },
+  { from: 'auth', to: 'client', label: '2. Token-Antwort',
+    data: 'access_token (JWT, signiert, 1 Stunde gültig)\n→ Antwort-Handler speichert es als {{token}}',
+    sprich: 'Der mock-oauth2-server ist ein Test-Anmeldedienst und stellt das Token sofort aus. Im echten Betrieb stünde hier ein richtiger Dienst wie Authentik oder Keycloak. Was im Token steht, zeigt das Token-Beispiel unter diesem Kasten.' },
+  { from: 'client', to: 'resource', label: '3. Anfrage an euren Service',
+    data: 'GET /… (euer Endpunkt)\nAuthorization: Bearer {{token}}',
+    sprich: 'Jetzt kommt euer Service ins Spiel. Swagger funktioniert genauso: Authorize klicken, Token einfügen.' },
+  { from: 'resource', to: 'auth', label: '4. Schlüssel holen (einmalig)',
+    data: 'GET http://localhost:9000/default/jwks\n→ öffentlicher RSA-Schlüssel (kid: default)',
+    sprich: 'Beim ersten Token fragt Spring Security den Anmeldedienst nach seinem öffentlichen Schlüssel und merkt ihn sich. Das Token schickt es dabei nicht mit. Die gestrichelte Linie bleibt stehen: Euer Service vertraut diesem Aussteller.' },
+  { from: 'resource', to: null, label: '5. Token prüfen',
+    data: 'Signatur passt zum öffentlichen Schlüssel?\nnbf/exp: gerade gültig?\nnein → sofort 401, euer Controller läuft gar nicht erst',
+    sprich: 'Das erledigt Spring Security vor eurem Code. Eingestellt ist es mit jwk-set-uri in application.properties; welche Pfade ohne Token erreichbar sind, steht in SecurityConfig.' },
+  { from: 'resource', to: 'employee', label: '6. Weitergabe an den Employee-Service',
+    data: 'EmployeeClient.findById(id)\nGET http://localhost:8089/employees/{id}\nAuthorization: Bearer <derselbe Token wie in Schritt 3>',
+    sprich: 'Euer Controller läuft und fragt mitten in der Bearbeitung beim Employee-Service nach, zum Beispiel ob es die Mitarbeiter-Id gibt. Euer Service wird dabei selbst zum Client. Ein neues Token holt er nicht, er reicht das eingehende unverändert weiter: Token Relay.' },
+  { from: 'employee', to: null, label: '7. Employee-Service prüft',
+    data: 'dieselbe Prüfung wie in Schritt 5\nSchlüssel ebenfalls von /default/jwks',
+    sprich: 'Der Employee-Service nimmt das Token an, weil es vom selben Aussteller stammt und mit demselben Schlüssel signiert ist. Beide gestrichelten Linien führen zum selben Anmeldedienst, deshalb funktioniert die Weitergabe.' },
+  { from: 'employee', to: 'resource', label: '8. Antwort an euren Service',
+    data: '200 + Mitarbeiterdaten\n404 → findById liefert Optional.empty()\nanderer Fehler oder nicht erreichbar → EmployeeServiceUnavailableException',
+    sprich: 'Was ihr aus einer leeren Antwort macht, entscheidet euer Code, etwa 404 oder 422 für eine unbekannte Mitarbeiter-Id. Die Exception übersetzt der ApiExceptionHandler in 503.' },
+  { from: 'resource', to: 'client', label: '9. Antwort',
+    data: '2xx + Daten\n401 bei fehlendem, ungültigem oder abgelaufenem Token (Schritt 5)\n503 wenn der Employee-Service nicht mitspielt (Schritt 8)',
+    sprich: 'Erst jetzt antwortet euer Service. Die Anfrage aus Schritt 3 hat die ganze Zeit gewartet, denn der Aufruf beim Employee-Service steckt mitten in ihrer Bearbeitung.' },
+];
+
+let mode = 'general';
+let idx = 0;
+
+function steps() { return mode === 'general' ? GENERAL_STEPS : PROJECT_STEPS; }
+function labels() { return mode === 'general' ? GENERAL_LABELS : PROJECT_LABELS; }
+
+function applyLabels() {
+  const l = labels();
+  for (const key of Object.keys(l)) {
+    document.querySelector('#role-' + key + ' .name').textContent = l[key][0];
+    document.getElementById('sub-' + key).textContent = l[key][1];
+    const exampleEl = document.getElementById('example-' + key);
+    const exampleText = l[key][2] || '';
+    exampleEl.textContent = exampleText;
+    exampleEl.style.display = exampleText ? 'block' : 'none';
+  }
+}
+
+function buildHistory() {
+  const container = document.getElementById('history');
+  container.innerHTML = '';
+  steps().forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'history-item';
+    btn.type = 'button';
+    btn.textContent = s.label;
+    btn.dataset.idx = i;
+    btn.addEventListener('click', () => { idx = i; render(); });
+    container.appendChild(btn);
+  });
+}
+
+function updateHistoryHighlight() {
+  const items = document.querySelectorAll('.history-item');
+  items.forEach((btn, i) => {
+    btn.classList.toggle('current', i === idx);
+    btn.classList.toggle('done', i < idx);
+  });
+  const current = document.querySelector('.history-item.current');
+  if (current) current.scrollIntoView({ block: 'nearest' });
+}
+
+function centerOf(el, stageRect) {
+  const r = el.getBoundingClientRect();
+  return {
+    x: r.left + r.width / 2 - stageRect.left,
+    y: r.top + r.height / 2 - stageRect.top,
+  };
+}
+
+function edgePoint(fromCenter, toCenter, el, stageRect) {
+  const r = el.getBoundingClientRect();
+  const halfW = r.width / 2, halfH = r.height / 2;
+  const dx = toCenter.x - fromCenter.x, dy = toCenter.y - fromCenter.y;
+  if (dx === 0 && dy === 0) return fromCenter;
+  const scaleX = halfW / Math.abs(dx || 1e-6);
+  const scaleY = halfH / Math.abs(dy || 1e-6);
+  const scale = Math.min(scaleX, scaleY);
+  return { x: fromCenter.x + dx * scale, y: fromCenter.y + dy * scale };
+}
+
+function drawTrust() {
+  const stage = document.getElementById('stage');
+  const stageRect = stage.getBoundingClientRect();
+  const authEl = document.getElementById('role-auth');
+  for (const [key, shift] of [['resource', -70], ['employee', 0]]) {
+    const path = document.getElementById('trust-' + key);
+    const label = document.getElementById('trust-label-' + key);
+    const show = mode === 'project';
+    path.style.display = show ? '' : 'none';
+    label.style.display = show ? '' : 'none';
+    if (!show) continue;
+    const el = document.getElementById('role-' + key);
+    const c = centerOf(el, stageRect), a = centerOf(authEl, stageRect);
+    c.x += shift; a.x += shift;
+    const p1 = edgePoint(c, a, el, stageRect), p2 = edgePoint(a, c, authEl, stageRect);
+    path.setAttribute('d', `M${p1.x},${p1.y} L${p2.x},${p2.y}`);
+    label.setAttribute('x', (p1.x + p2.x) / 2 + 6);
+    label.setAttribute('y', (p1.y + p2.y) / 2);
+  }
+}
+
+function render() {
+  const s = steps()[idx];
+  const stage = document.getElementById('stage');
+  drawTrust();
+
+  {
+    const stageRect = stage.getBoundingClientRect();
+
+    document.querySelectorAll('.role').forEach(r => r.classList.remove('active'));
+    document.getElementById('role-' + s.from).classList.add('active');
+    if (s.to) document.getElementById('role-' + s.to).classList.add('active');
+
+    const connector = document.getElementById('connector');
+    const packet = document.getElementById('packet');
+    const stepLabel = document.getElementById('step-label');
+
+    if (s.to) {
+      const fromEl = document.getElementById('role-' + s.from);
+      const toEl = document.getElementById('role-' + s.to);
+      const fromC = centerOf(fromEl, stageRect);
+      const toC = centerOf(toEl, stageRect);
+      const p1 = edgePoint(fromC, toC, fromEl, stageRect);
+      const p2 = edgePoint(toC, fromC, toEl, stageRect);
+      connector.setAttribute('d', `M${p1.x},${p1.y} L${p2.x},${p2.y}`);
+      connector.style.opacity = 1;
+      packet.style.opacity = 1;
+      packet.setAttribute('cx', p1.x);
+      packet.setAttribute('cy', p1.y);
+      requestAnimationFrame(() => {
+        packet.style.transition = 'cx 0.7s ease, cy 0.7s ease';
+        packet.setAttribute('cx', p2.x);
+        packet.setAttribute('cy', p2.y);
+      });
+      stepLabel.style.opacity = 0;
+    } else {
+      connector.style.opacity = 0;
+      packet.style.opacity = 0;
+      const el = document.getElementById('role-' + s.from);
+      const c = centerOf(el, stageRect);
+      stepLabel.style.left = c.x + 'px';
+      stepLabel.style.top = (c.y > stageRect.height / 2 ? c.y - 70 : c.y + 70) + 'px';
+      stepLabel.textContent = '↻ intern';
+      stepLabel.style.opacity = 1;
+    }
+  }
+
+  document.getElementById('step-counter').textContent = `Schritt ${idx + 1} von ${steps().length}`;
+  document.getElementById('action-text').textContent = s.label;
+  document.getElementById('data-text').textContent = s.data;
+  document.getElementById('sprich-text').textContent = s.sprich;
+  document.getElementById('count-text').textContent = `${idx + 1} / ${steps().length}`;
+  document.getElementById('btn-prev').disabled = idx === 0;
+  document.getElementById('btn-next').disabled = idx === steps().length - 1;
+
+  updateHistoryHighlight();
+}
+
+function setMode(newMode) {
+  mode = newMode;
+  idx = 0;
+  document.getElementById('btn-general').classList.toggle('active', mode === 'general');
+  document.getElementById('btn-project').classList.toggle('active', mode === 'project');
+  document.getElementById('role-owner').classList.toggle('unused', mode === 'project');
+  document.getElementById('stage').classList.toggle('project', mode === 'project');
+  document.getElementById('token-demo').classList.toggle('visible', mode === 'project');
+  applyLabels();
+  buildHistory();
+  render();
+}
+
+document.getElementById('btn-general').addEventListener('click', () => setMode('general'));
+document.getElementById('btn-project').addEventListener('click', () => setMode('project'));
+document.getElementById('btn-prev').addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+document.getElementById('btn-next').addEventListener('click', () => { if (idx < steps().length - 1) { idx++; render(); } });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') document.getElementById('btn-next').click();
+  if (e.key === 'ArrowLeft') document.getElementById('btn-prev').click();
+});
+window.addEventListener('resize', render);
+
+applyLabels();
+buildHistory();
+render();
+</script>
+
+</body>
+</html>
