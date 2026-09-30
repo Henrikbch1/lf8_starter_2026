@@ -5,7 +5,7 @@ mit einem gemeinsamen Git-Repository und einem gemeinsamen Projekt auf
 **sprint.heidelab.de**.
 
 Am Ende steht eine Retrospektive. Wie ihr die Zeit bis dahin auf Planung und Umsetzung
-verteilt, plant ihr selbst.
+verteilt, plant ihr selbst. Wie bewertet wird, steht in der [Bewertung](05-bewertung.md).
 
 **Vorher zu Hause:** Die Docker-Images sind groß. Zieht sie **vor** der ersten Projektstunde,
 nicht alle gleichzeitig im Schul-WLAN: Starter-Repository klonen
@@ -70,6 +70,8 @@ Setzt euren Sprint um. Arbeitet arbeitsteilig:
 - Jeder Task bekommt einen eigenen Branch. Er kommt auf `main`, wenn ein anderes
   Gruppenmitglied den Code angesehen hat und alle Tests grün sind. Ein Task muss dafür nicht
   die ganze Story fertig machen: Eine Entität ohne Endpunkt darf auf `main`.
+- Wer den Code angesehen hat, schreibt einen Kommentar an den Task auf sprint.heidelab.de
+  (z. B. „Review: ok“). Habt ihr im Pair gearbeitet, vermerkt ihr das ebenso am Task.
 - Ist niemand aus der Gruppe da, der den Code ansehen kann, fragt ihr die Lehrkraft. Geht auch
   das nicht, darf der Task nach grünen Tests auf `main`; ihr vermerkt es am Task und holt das
   Review in der nächsten Stunde nach.
@@ -105,3 +107,6 @@ Wenn alle Muss-Stories fertig sind, macht ihr in dieser Reihenfolge weiter:
 
 Führt am Ende des Projekts die Retrospektive auf sprint.heidelab.de durch. Leitfrage: Was nehmen
 wir als Team ins nächste Projekt mit?
+
+Danach füllt jede und jeder den Selbsteinschätzungsbogen aus der [Bewertung](05-bewertung.md)
+aus. Das Fachgespräch am eigenen Repo folgt in einem eigenen Termin nach dem Projekt.
