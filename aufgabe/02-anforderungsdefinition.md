@@ -84,6 +84,14 @@ Alle Services der HiTec GmbH antworten im Fehlerfall einheitlich:
 Welcher Fehlerfall welchen Status bekommt, entscheidet ihr in euren Akzeptanzkriterien anhand
 dieser Tabelle.
 
+Auch die Adressen (URIs) sind in allen Services einheitlich:
+
+- Eine Ressource heißt nach dem, was sie ist: ein Substantiv im Plural, zum Beispiel `/orders`
+  und `/orders/{id}`. Ein eigenes Präfix wie `/lf8` oder `/api/v1` gibt es nicht.
+- Die Aktion steckt in der HTTP-Methode, nicht in der Adresse. Verben wie `/add`, `/assign`
+  oder `/delete` gehören nicht in eine URI.
+- Was zu einer Ressource gehört, ist eine Unter-Ressource, zum Beispiel `/orders/{id}/items`.
+
 ## Qualität
 
 - Für jeden Endpunkt gibt es einen **Integrationstest für den Erfolgsfall** („Happy Path“).

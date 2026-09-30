@@ -45,7 +45,8 @@ Grundlage: [Ausgangssituation](01-ausgangssituation.md),
    Kann-Anforderungen legt ihr als Stories mit Kundennutzen *mittel* darunter an.
 2. **API entwerfen.** Bevor jemand programmiert, legt ihr in der README eures Forks eine Tabelle
    an: Methode, URI, Request-Body, Statuscodes im Erfolgs- und Fehlerfall, für jede
-   Muss-Story. Zeigt sie der Lehrkraft, bevor ihr weitermacht.
+   Muss-Story. Prüft sie gemeinsam gegen die API-Richtlinie in der Anforderungsdefinition:
+   Statuscodes und Adressen. Bei Fragen holt ihr die Lehrkraft dazu; warten müsst ihr nicht.
 3. **Schätzen.** Schätzt jede Muss-Story im Planning Poker auf sprint.heidelab.de. Liegen die
    Karten weit auseinander, erklären die höchste und die niedrigste Karte kurz ihre Gründe.
    Danach einigt ihr euch auf einen Wert und übernehmt ihn.
@@ -57,7 +58,7 @@ Grundlage: [Ausgangssituation](01-ausgangssituation.md),
 6. **Sprint starten.** Legt den Sprint an, zieht die Muss-Stories hinein und startet ihn.
 
 **Fertig, wenn** alle Muss-Stories mit Akzeptanzkriterien, Schätzung und Tasks im laufenden
-Sprint liegen und die Lehrkraft eure API-Tabelle gesehen hat.
+Sprint liegen und eure API-Tabelle der API-Richtlinie entspricht.
 
 ---
 
