@@ -45,8 +45,9 @@ Das Use-Case-Diagramm zeigt alle Anwendungsfälle. **Muss** heißt: gehört in e
 **Mitarbeiter prüfen.** Überall, wo eine Mitarbeiter-ID hereinkommt, fragt euer Service den
 Employee-Service, ob es sie gibt.
 
-**Qualifikation prüfen.** Wer einem Projekt zugeordnet wird, muss die Qualifikation besitzen, die
-seine Rolle im Projekt ist. Die Qualifikationen einer Person liefert der Employee-Service.
+**Qualifikation prüfen.** Beim Zuordnen gebt ihr zusätzlich die Rolle an, und zwar als ID einer
+Qualifikation aus dem Employee-Service. Die Person muss diese Qualifikation besitzen; ihre
+Qualifikationen liefert der Employee-Service.
 
 **Verfügbarkeit prüfen.** Eine Person darf einem Projekt nur zugeordnet werden, wenn sie in
 dessen Zeitraum nicht schon in einem anderen Projekt eingeplant ist. Genau so:
