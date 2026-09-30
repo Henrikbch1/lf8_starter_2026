@@ -1,6 +1,6 @@
 # Arbeitsaufträge Projektverwaltung
 
-Das Projekt dauert **20 Unterrichtsstunden**. Ihr arbeitet in Gruppen von drei bis vier Personen
+Das Projekt dauert **20 Unterrichtsstunden**. Ihr arbeitet in Gruppen von zwei bis drei Personen
 mit einem gemeinsamen Git-Repository und einem gemeinsamen Projekt auf
 **sprint.heidelab.de**.
 
@@ -39,7 +39,8 @@ Grundlage: [Ausgangssituation](01-ausgangssituation.md),
 [Musterstory](03-musterstory.md).
 
 1. **Stories schreiben.** Legt im Backlog für jede Muss-Anforderung eine User Story an, mit
-   Akzeptanzkriterien nach dem Muster. Die Musterstory „Projekt anlegen“ übernehmt ihr. Setzt
+   Akzeptanzkriterien nach dem Muster. Die Musterstory stammt aus einem anderen Service und
+   zeigt nur die Form; alle Stories für die Projektverwaltung schreibt ihr selbst. Setzt
    bei den Muss-Stories den Kundennutzen auf *hoch* und ordnet sie nach oben. Die
    Kann-Anforderungen legt ihr als Stories mit Kundennutzen *mittel* darunter an.
 2. **API entwerfen.** Bevor jemand programmiert, legt ihr in der README eures Forks eine Tabelle
@@ -69,6 +70,9 @@ Setzt euren Sprint um. Arbeitet arbeitsteilig:
 - Jeder Task bekommt einen eigenen Branch. Er kommt auf `main`, wenn ein anderes
   Gruppenmitglied den Code angesehen hat und alle Tests grün sind. Ein Task muss dafür nicht
   die ganze Story fertig machen: Eine Entität ohne Endpunkt darf auf `main`.
+- Ist niemand aus der Gruppe da, der den Code ansehen kann, fragt ihr die Lehrkraft. Geht auch
+  das nicht, darf der Task nach grünen Tests auf `main`; ihr vermerkt es am Task und holt das
+  Review in der nächsten Stunde nach.
 - Eine Story ist erst fertig, wenn sie die Definition of Done erfüllt. Dann zieht ihr sie auf
   dem Board auf *fertig*.
 - Neue Aufrufe an den Employee-Service baut ihr als weitere Methode im `EmployeeClient`, nach
@@ -77,7 +81,19 @@ Setzt euren Sprint um. Arbeitet arbeitsteilig:
 - Bleibt ihr länger als 20 Minuten an derselben Stelle hängen: Fragt zuerst in der Gruppe, dann
   die Lehrkraft.
 
-Wenn alle Muss-Stories fertig sind, zieht ihr Kann-Stories in den Sprint.
+Wenn alle Muss-Stories fertig sind, macht ihr in dieser Reihenfolge weiter:
+
+1. **Fachregeln mit Tests absichern.** Schreibt Integrationstests für die Fälle, in denen das
+   Zuordnen scheitern oder gerade noch klappen muss: Zeiträume teilen sich genau einen Tag
+   (abweisen), ein Zeitraum beginnt am Tag nach dem Ende des anderen (erlaubt), dieselbe Person
+   ein zweites Mal, fehlende Qualifikation. Dazu: Nach dem Löschen eines Projekts ist die Person
+   wieder frei. Und: Ist der Employee-Service nicht erreichbar, ändert sich in eurer Datenbank
+   nichts.
+2. **Kann-Stories.** Ergänzt ihre Akzeptanzkriterien und Tasks, dann zieht sie in den Sprint.
+3. **Optional: Projekt abschließen.** Das tatsächliche Enddatum eines Projekts setzen. Schreibt
+   vorher als Story fest, was gelten soll: Darf ein abgeschlossenes Projekt noch Mitarbeitende
+   bekommen? Darf man es ein zweites Mal abschließen? Die Verfügbarkeitsprüfung bleibt bei den
+   geplanten Zeiträumen.
 
 **Fertig, wenn** alle Muss-Stories die Definition of Done erfüllen.
 
