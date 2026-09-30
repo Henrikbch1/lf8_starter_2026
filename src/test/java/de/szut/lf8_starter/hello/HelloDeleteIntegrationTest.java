@@ -1,5 +1,6 @@
 package de.szut.lf8_starter.hello;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,13 +19,16 @@ class HelloDeleteIntegrationTest extends AbstractIntegrationTest {
     private HelloRepository repository;
 
     @Test
-    void deleteReturns204() throws Exception {
+    void deleteReturns204AndRemovesEntry() throws Exception {
         // Arrange
         HelloEntity saved = repository.save(new HelloEntity("Zum Löschen"));
 
-        // Act & Assert
+        // Act
         mockMvc.perform(delete("/hello/{id}", saved.getId()).with(jwt()))
                 .andExpect(status().isNoContent());
+
+        // Assert: 204 allein beweist nicht, dass wirklich gelöscht wurde.
+        assertThat(repository.findById(saved.getId())).isEmpty();
     }
 
     @Test
