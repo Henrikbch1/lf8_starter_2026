@@ -33,16 +33,21 @@ Bewertet wird eure Gruppe am Ende des Projekts.
 
 Das Gespräch findet in einem **eigenen Termin nach dem Projekt** statt und dauert etwa
 **15 Minuten**. Bring deinen Laptop mit laufendem Fork mit. Grundlage ist der Stand von `main`
-zur Abgabe. Die Lehrkraft wählt einen Task, an dem du mitgearbeitet hast, auch im Pair oder als
-Reviewerin bzw. Reviewer. War es ein Task, den du reviewt hast, sagst du zusätzlich, worauf du
-beim Review geachtet hast.
+zur Abgabe.
+
+**Du musst jede Zeile erklären können, die eure Gruppe geschrieben oder geändert hat**, nicht nur
+deinen eigenen Code und den, den du reviewt hast. Die Lehrkraft wählt die Stellen frei. Den
+mitgelieferten Starter-Code (z. B. `SecurityConfig`, `EmployeeClient`) musst du nur so weit
+erklären, wie euer Code ihn benutzt. Stammt die Stelle aus einem Task, den du reviewt hast,
+sagst du zusätzlich, worauf du beim Review geachtet hast. Am besten bereitest du dich vor, indem
+ihr euch in der Gruppe gegenseitig euren Code erklärt.
 
 | Nr. | Ich kann … indem ich … | 1 | 2 | 3 |
 |---|---|---|---|---|
-| B1 | zeigen, dass mein Beitrag funktioniert und für andere nutzbar ist, **indem ich** ihn mit `SampleRequests.http` oder Swagger im Erfolgs- und Fehlerfall vorführe. | Der Erfolgsfall läuft. | Erfolgs- und Fehlerfall laufen, und ich erkläre, was die Antwort samt Fehlermeldung jemandem sagt, der die Schnittstelle nutzt (z. B. dem Team der späteren Weboberfläche). | Zusätzlich zeige ich einen Grenzfall und begründe, warum er so behandelt wird. |
-| B2 | den Weg einer Anfrage durch meinen Code erklären, **indem ich** von Controller über Service bis Repository bzw. `EmployeeClient` zeige, was wo passiert. | Ich beschreibe den Weg richtig, ohne zu begründen. | Ich erkläre, warum die Logik im Service liegt und nicht im Controller. | Ich wäge eine Alternative ab und sage, warum wir sie nicht gewählt haben. |
+| B1 | zeigen, dass unsere Lösung funktioniert und für andere nutzbar ist, **indem ich** sie mit `SampleRequests.http` oder Swagger im Erfolgs- und Fehlerfall vorführe. | Der Erfolgsfall läuft. | Erfolgs- und Fehlerfall laufen, und ich erkläre, was die Antwort samt Fehlermeldung jemandem sagt, der die Schnittstelle nutzt (z. B. dem Team der späteren Weboberfläche). | Zusätzlich zeige ich einen Grenzfall und begründe, warum er so behandelt wird. |
+| B2 | den Weg einer Anfrage durch unseren Code erklären, **indem ich** von Controller über Service bis Repository bzw. `EmployeeClient` zeige, was wo passiert. | Ich beschreibe den Weg richtig, ohne zu begründen. | Ich erkläre, warum die Logik im Service liegt und nicht im Controller. | Ich wäge eine Alternative ab und sage, warum wir sie nicht gewählt haben. |
 | B3 | eine Regel oder Fehlerbehandlung umsetzen, **indem ich** eine Fachregel (Verfügbarkeit, Qualifikation, Mitarbeiterprüfung) **oder** eine Fehlerbehandlung (Pflichtfeld, unbekannte ID, Datum) im Code zeige und den Statuscode begründe. | Die Regel ist umgesetzt. | Ich begründe den Statuscode mit der API-Richtlinie. | Ich wäge ab (z. B. 409 gegen 422, oder was passiert, wenn der Employee-Service nicht antwortet). |
-| B4 | meinen Code absichern, **indem ich** einen Integrationstest zu meinem Beitrag erkläre. | Der Test existiert und ist grün. | Ich erkläre, was er prüft, und ob der `EmployeeClient` gemockt werden muss. | Ich nenne einen Fehler, den der Test fangen würde, und einen, den er nicht fängt. |
+| B4 | beurteilen, wie unser Code abgesichert ist, **indem ich** einen Integrationstest aus unserem Repo erkläre. | Der Test existiert und ist grün. | Ich erkläre, was er prüft, und ob der `EmployeeClient` gemockt werden muss. | Ich nenne einen Fehler, den der Test fangen würde, und einen, den er nicht fängt. |
 | B5 | über die Lösung hinausdenken, **indem ich** eine Änderung durchspiele, die die Lehrkraft im Gespräch vorgibt. | Ich weiß, wo die Änderung ansetzt. | Ich skizziere Endpunkt, Regel und Test. | Ich wäge zwei Umsetzungen ab und nenne Folgen für bestehende Regeln. |
 
 Die Kann-Stories bringen keine Zusatzpunkte. Du kannst sie aber als Material für B1 bis B4
