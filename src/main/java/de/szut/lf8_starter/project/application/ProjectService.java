@@ -3,7 +3,7 @@ package de.szut.lf8_starter.project.application;
 import de.szut.lf8_starter.employee.EmployeeClient;
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
-import de.szut.lf8_starter.project.persistence.ProjectEntity;
+import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package de.szut.lf8_starter.project.persistence;
+package de.szut.lf8_starter.project.domain;
 
 import java.time.LocalDate;
 import java.util.HashSet;
