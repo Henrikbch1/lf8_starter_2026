@@ -1,4 +1,4 @@
-package de.szut.lf8_starter.project;
+package de.szut.lf8_starter.project.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
