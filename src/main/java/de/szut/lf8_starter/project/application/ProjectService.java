@@ -15,17 +15,20 @@ public class ProjectService {
 
   private final ProjectRepository projectRepository;
   private final EmployeeClient employeeClient;
+  private final ProjectMapper projectMapper;
 
   /**
    * Creates a service using the project repository and employee client.
    *
    * @param projectRepository repository used to persist projects
    * @param employeeClient client used to verify responsible employees
+   * @param projectMapper mapper used to convert project entities into DTOs
    */
   public ProjectService(
-      final ProjectRepository projectRepository, final EmployeeClient employeeClient) {
+          final ProjectRepository projectRepository, final EmployeeClient employeeClient, ProjectMapper projectMapper) {
     this.projectRepository = projectRepository;
     this.employeeClient = employeeClient;
+      this.projectMapper = projectMapper;
   }
 
   /**
@@ -55,19 +58,6 @@ public class ProjectService {
   public List<ProjectGetDto> findAllProjekte() {
     List<ProjectEntity> allEntities = projectRepository.findAll();
     return allEntities.stream()
-        .map(
-            entity ->
-                new ProjectGetDto(
-                    entity.getId(),
-                    entity.getDesignation(),
-                    entity.getResponsibleEmployeeId(),
-                    entity.getCustomerId(),
-                    entity.getCustomerContactName(),
-                    entity.getGoalComment(),
-                    entity.getStartDate(),
-                    entity.getPlannedEndDate(),
-                    entity.getActualEndDate(),
-                    entity.getRequiredQualificationIds()))
-        .toList();
+        .map(projectMapper::toDto).toList();
   }
 }

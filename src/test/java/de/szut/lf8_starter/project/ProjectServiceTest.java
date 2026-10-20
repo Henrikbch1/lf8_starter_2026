@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import de.szut.lf8_starter.project.api.ProjectGetDto;
+import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
@@ -12,13 +13,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectServiceTest {
   @Mock private ProjectRepository projectRepository;
   @InjectMocks private ProjectService projectService;
-
+  @Spy private ProjectMapper projectMapper = new ProjectMapper();
   /** Verifies that an empty list is returned when no projects exist. */
   @Test
   void findAllProjekte_shouldReturnEmptyList() {
