@@ -47,9 +47,13 @@ public class ProjectService {
     return projectRepository.save(project);
   }
 
+  /**
+   * Retrieves all projects from the database and converts them into response DTOs.
+   *
+   * @return a list of all projects as ProjectGetDto objects, or an empty list if no projects exist
+   */
   public List<ProjectGetDto> findAllProjekte() {
     List<ProjectEntity> allEntities = projectRepository.findAll();
-
     return allEntities.stream()
         .map(
             entity ->
