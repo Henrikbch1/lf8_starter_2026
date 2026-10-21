@@ -1,6 +1,7 @@
 package de.szut.lf8_starter.project.api;
 
 import java.net.URI;
+import java.util.List;
 
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -66,5 +68,24 @@ public class ProjectController {
                 .toUri();
 
         return ResponseEntity.created(location).body(createdProject);
+    }
+    /**
+     * Retrieves all projects.
+     *
+     * @return a list of all projects, or an empty list if none exist
+     */
+    @Operation(
+            summary = "Get all projects",
+            description = "Returns all projects. If no projects exist, an empty list is returned."
+    )
+    @ApiResponse(responseCode = "200", description = "Projects retrieved successfully")
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @GetMapping
+    public ResponseEntity<List<ProjectGetDto>> findAllProjects() {
+        List<ProjectGetDto> projects = projectService.findAllProjects()
+                .stream()
+                .map(projectMapper :: toDto)
+                .toList();
+        return ResponseEntity.ok(projects);
     }
 }
