@@ -55,7 +55,7 @@ public class ProjectService {
    *
    * @return a list of all projects as ProjectGetDto objects, or an empty list if no projects exist
    */
-  public List<ProjectGetDto> findAllProjekte() {
+  public List<ProjectGetDto> findAllProjects() {
     List<ProjectEntity> allEntities = projectRepository.findAll();
     return allEntities.stream()
         .map(projectMapper::toDto).toList();

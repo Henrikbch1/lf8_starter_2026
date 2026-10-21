@@ -77,8 +77,8 @@ public class ProjectController {
     @ApiResponse(responseCode = "200", description = "Projects retrieved successfully")
     @ApiResponse(responseCode = "401", description = "Authentication required")
     @GetMapping
-    public ResponseEntity<List<ProjectGetDto>> findAllProjekte(){
-        return ResponseEntity.ok(projectService.findAllProjekte());
+    public ResponseEntity<List<ProjectGetDto>> findAllProjects(){
+        return ResponseEntity.ok(projectService.findAllProjects());
     }
 
 }
