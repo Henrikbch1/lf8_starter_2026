@@ -9,6 +9,7 @@ import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
 import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
+import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -94,6 +95,13 @@ public class ProjectController {
      * @return the project as a ProjectGetDto with HTTP status 200 OK
      * @throws ProjectNotFoundException if no project exists with the given ID
      */
+    @Operation(
+            summary = "Get a project by ID",
+            description = "Returns a single project by its ID."
+    )
+    @ApiResponse(responseCode = "200", description = "Project retrieved successfully")
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @ApiResponse(responseCode = "404", description = "Project with the specified ID not found")
     @GetMapping("/{id}")
     public ResponseEntity<ProjectGetDto> findProjectById(@PathVariable Long id){
         ProjectEntity project = projectService.findProjectById(id);
