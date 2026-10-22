@@ -4,6 +4,7 @@ import de.szut.lf8_starter.employee.EmployeeClient;
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
+import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import java.util.List;
 
@@ -69,7 +70,7 @@ public class ProjectService {
   public ProjectEntity findProjectById(Long id){
     return projectRepository.findById(id).orElseThrow(() ->
             // Throw an exception if no project is found with the given ID.
-            new EntityNotFoundException("Project with ID " + id + " not found"));
+            new ProjectNotFoundException(id));
   }
 
 }
