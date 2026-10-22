@@ -30,3 +30,28 @@ Authorization: Bearer {{jwtToken}}
 # Expected: 401 Unauthorized because no JWT token is provided.
 GET http://localhost:8080/projects
 Accept: application/json
+
+### T003 - Get a project that does not exist
+
+# Verifies that a missing project returns HTTP 404.
+# The error response must contain the requested project ID.
+GET http://localhost:8080/projects/999999
+Accept: application/json
+Authorization: Bearer {{jwtToken}}
+
+### T003 - Get a project by ID (authenticated)
+
+# Retrieves an existing project using its ID.
+# Replace 1 with the ID of an existing project.
+# Expected: 200 OK with the project details as JSON.
+GET http://localhost:8080/projects/1
+Accept: application/json
+Authorization: Bearer {{jwtToken}}
+
+
+### T003 - Get a project by ID (without authentication)
+
+# Verifies that retrieving a project by ID requires authentication.
+# Expected: 401 Unauthorized.
+GET http://localhost:8080/projects/1
+Accept: application/json
