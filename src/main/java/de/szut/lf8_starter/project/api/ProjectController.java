@@ -8,15 +8,12 @@ import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
 import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
 import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.ProjectEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
@@ -80,6 +77,7 @@ public class ProjectController {
     )
     @ApiResponse(responseCode = "200", description = "Projects retrieved successfully")
     @ApiResponse(responseCode = "401", description = "Authentication required")
+
     @GetMapping
     public ResponseEntity<List<ProjectGetDto>> findAllProjects() {
         List<ProjectGetDto> projects = projectService.findAllProjects()
@@ -88,4 +86,19 @@ public class ProjectController {
                 .toList();
         return ResponseEntity.ok(projects);
     }
+
+    /**
+     * Retrieves a project by its ID.
+     *
+     * @param id the ID of the project to retrieve
+     * @return the project as a ProjectGetDto with HTTP status 200 OK
+     * @throws ProjectNotFoundException if no project exists with the given ID
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ProjectGetDto> findProjectById(@PathVariable Long id){
+        ProjectEntity project = projectService.findProjectById(id);
+        ProjectGetDto projectDto = projectMapper.toDto(project);
+        return ResponseEntity.ok(projectDto);
+    }
+
 }
