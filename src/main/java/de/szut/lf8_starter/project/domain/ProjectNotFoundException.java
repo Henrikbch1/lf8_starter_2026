@@ -3,6 +3,7 @@ package de.szut.lf8_starter.project.domain;
 /**
  * Signals that a project with the specified ID does not exist.
  */
+
 public class ProjectNotFoundException extends RuntimeException {
 
   /**
@@ -11,6 +12,6 @@ public class ProjectNotFoundException extends RuntimeException {
    * @param id the ID of the project that was not found
    */
   public ProjectNotFoundException (final Long id){
-    super("Project with ID" + id + " Nnot found");
+    super("Project with ID" + id + " not found");
   }
 }
