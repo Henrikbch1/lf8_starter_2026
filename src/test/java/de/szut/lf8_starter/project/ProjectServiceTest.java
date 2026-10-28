@@ -54,8 +54,8 @@ class ProjectServiceTest {
     assertEquals(2, result.size());
 
     // Verify that the first project is returned unchanged
-    assertEquals(1L, result.get(0).getId());
-    assertEquals("Project Alpha", result.get(0).getDesignation());
+    assertEquals(1L, result.getFirst().getId());
+    assertEquals("Project Alpha", result.getFirst().getDesignation());
 
     // Verify that the second project is returned unchanged
     assertEquals(2L, result.get(1).getId());
