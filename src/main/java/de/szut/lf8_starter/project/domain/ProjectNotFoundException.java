@@ -1,6 +1,4 @@
 package de.szut.lf8_starter.project.domain;
-
-
 import lombok.Getter;
 
 /**
@@ -10,6 +8,9 @@ import lombok.Getter;
 public final class ProjectNotFoundException extends RuntimeException {
 
   private static final String ERROR_MESSAGE = "Project with ID %d not found";
+
+  private final Long projectId;
+
   /**
    * Creates an exception for a project that does not exist.
    *
@@ -17,5 +18,7 @@ public final class ProjectNotFoundException extends RuntimeException {
    */
   public ProjectNotFoundException(final Long projectId) {
     super(ERROR_MESSAGE.formatted(projectId));
+    this.projectId = projectId;
   }
 }
+
