@@ -30,3 +30,82 @@ Authorization: Bearer {{jwtToken}}
 # Expected: 401 Unauthorized because no JWT token is provided.
 GET http://localhost:8080/projects
 Accept: application/json
+
+
+### T001 - Create a project (valid request)
+
+# Expected: 201 Created with the stored project and a Location header.
+POST http://localhost:8080/projects
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{jwtToken}}
+
+{
+  "designation": "Rollout Nordlicht",
+  "responsibleEmployeeId": 1,
+  "customerId": 42,
+  "customerContactName": "Mara Beispiel",
+  "goalComment": "Einführung der neuen Plattform am Standort Nord.",
+  "startDate": "2026-11-02",
+  "plannedEndDate": "2026-12-18",
+  "requiredQualificationIds": [1, 2]
+}
+
+
+### T001 - Create a project (invalid period)
+
+# Expected: 422 Unprocessable Content because the start date is after the planned end date.
+POST http://localhost:8080/projects
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{jwtToken}}
+
+{
+  "designation": "Projekt mit ungültigem Zeitraum",
+  "responsibleEmployeeId": 1,
+  "customerId": 42,
+  "customerContactName": "Mara Beispiel",
+  "goalComment": "Negativbeispiel für die Datumsprüfung.",
+  "startDate": "2026-12-19",
+  "plannedEndDate": "2026-12-18",
+  "requiredQualificationIds": [1, 2]
+}
+
+
+### T001 - Create a project (unknown responsible employee)
+
+# Expected: 404 Not Found because employee 999 does not exist.
+POST http://localhost:8080/projects
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{jwtToken}}
+
+{
+  "designation": "Projekt mit unbekanntem Verantwortlichen",
+  "responsibleEmployeeId": 999,
+  "customerId": 42,
+  "customerContactName": "Mara Beispiel",
+  "goalComment": "Negativbeispiel für die Mitarbeiterprüfung.",
+  "startDate": "2026-11-02",
+  "plannedEndDate": "2026-12-18",
+  "requiredQualificationIds": [1, 2]
+}
+
+
+### T001 - Create a project (missing designation)
+
+# Expected: 400 Bad Request because designation must not be blank.
+POST http://localhost:8080/projects
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{jwtToken}}
+
+{
+  "responsibleEmployeeId": 1,
+  "customerId": 42,
+  "customerContactName": "Mara Beispiel",
+  "goalComment": "Negativbeispiel für die Eingabevalidierung.",
+  "startDate": "2026-11-02",
+  "plannedEndDate": "2026-12-18",
+  "requiredQualificationIds": [1, 2]
+}
