@@ -55,6 +55,6 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail unreadableBody() {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
-                "Request-Body ist ungültig. Datumsangaben im Format yyyy-MM-dd angeben.");
+                "The request body is invalid. Dates must use the yyyy-MM-dd format.");
     }
 }
