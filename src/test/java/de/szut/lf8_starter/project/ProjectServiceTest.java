@@ -3,7 +3,6 @@ package de.szut.lf8_starter.project;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import de.szut.lf8_starter.project.api.ProjectGetDto;
 import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
@@ -27,7 +26,7 @@ class ProjectServiceTest {
     // Arrange
     when(projectRepository.findAll()).thenReturn(List.of());
     // Act
-    List<ProjectGetDto> result = projectService.findAllProjekte();
+    List<ProjectEntity> result = projectService.findAllProjects();
     // Assert
     assertTrue(result.isEmpty());
   }
@@ -49,18 +48,18 @@ class ProjectServiceTest {
     when(projectRepository.findAll()).thenReturn(List.of(project1, project2));
 
     // Act: Call the service method
-    List<ProjectGetDto> result = projectService.findAllProjekte();
+    List<ProjectEntity> result = projectService.findAllProjects();
 
     // Assert: Verify that two projects are returned
     assertEquals(2, result.size());
 
-    // Verify that the first project is correctly mapped to a DTO
-    assertEquals(1L, result.get(0).id());
-    assertEquals("Project Alpha", result.get(0).designation());
+    // Verify that the first project is returned unchanged
+    assertEquals(1L, result.getFirst().getId());
+    assertEquals("Project Alpha", result.getFirst().getDesignation());
 
-    // Verify that the second project is correctly mapped to a DTO
-    assertEquals(2L, result.get(1).id());
-    assertEquals("Project Beta", result.get(1).designation());
+    // Verify that the second project is returned unchanged
+    assertEquals(2L, result.get(1).getId());
+    assertEquals("Project Beta", result.get(1).getDesignation());
 
     // Verify that the repository method is called exactly once
     verify(projectRepository, times(1)).findAll();
