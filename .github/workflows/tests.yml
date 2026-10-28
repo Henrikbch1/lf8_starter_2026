@@ -1,0 +1,45 @@
+name: Tests
+
+# Führt alle Unit- und Integrationstests aus. Kein docker compose nötig:
+# Die Integrationstests starten ihre Postgres-DB per Testcontainers und der
+# Employee-Client wird gemockt (MockRestServiceServer / @MockitoBean).
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Maven Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: JDK 26 einrichten
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '26'
+          cache: maven
+
+      - name: Alle Tests ausführen
+        run: ./mvnw -B verify
+
+      - name: Testberichte hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports
+          if-no-files-found: ignore
