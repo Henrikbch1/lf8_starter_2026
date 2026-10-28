@@ -1,17 +1,21 @@
 package de.szut.lf8_starter.project.domain;
 
+
+import lombok.Getter;
+
 /**
- * Signals that a project with the specified ID does not exist.
+ * Exception thrown when a project with the specified ID does not exist.
  */
+@Getter
+public final class ProjectNotFoundException extends RuntimeException {
 
-public class ProjectNotFoundException extends RuntimeException {
-
+  private static final String ERROR_MESSAGE = "Project with ID %d not found";
   /**
-   * Creates an exception when a project cannot be found.
+   * Creates an exception for a project that does not exist.
    *
-   * @param id the ID of the project that was not found
+   * @param projectId the ID of the project that was not found
    */
-  public ProjectNotFoundException (final Long id){
-    super("Project with ID" + id + " not found");
+  public ProjectNotFoundException(final Long projectId) {
+    super(ERROR_MESSAGE.formatted(projectId));
   }
 }
