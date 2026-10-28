@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Getter
 @RestControllerAdvice
 public class ProjectExceptionHandler {
+
+  private static final String PROJECT_NOT_FOUND_TITLE = "Project not found";
+
   /**
    * Handles requests for projects that do not exist.
    *
@@ -18,10 +21,9 @@ public class ProjectExceptionHandler {
    */
   @ExceptionHandler(ProjectNotFoundException.class)
   public ProblemDetail handleProjectNotFound(final ProjectNotFoundException exception) {
-
     ProblemDetail problem =
         ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
-    problem.setTitle("Project not found");
+    problem.setTitle(PROJECT_NOT_FOUND_TITLE);
     problem.setProperty("projectId", exception.getProjectId());
     return problem;
   }
