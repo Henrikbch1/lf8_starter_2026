@@ -1,15 +1,15 @@
 package de.szut.lf8_starter.project.api;
 
 import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/** Handles exceptions related to project operations. */
+@Getter
 @RestControllerAdvice
 public class ProjectExceptionHandler {
-
   /**
    * Handles requests for projects that do not exist.
    *
@@ -19,9 +19,10 @@ public class ProjectExceptionHandler {
   @ExceptionHandler(ProjectNotFoundException.class)
   public ProblemDetail handleProjectNotFound(final ProjectNotFoundException exception) {
 
-    ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+    ProblemDetail problem =
+        ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     problem.setTitle("Project not found");
-    problem.setDetail(exception.getMessage());
+    problem.setProperty("projectId", exception.getProjectId());
     return problem;
   }
 }
