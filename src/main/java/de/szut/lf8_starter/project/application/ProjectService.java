@@ -6,9 +6,8 @@ import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
-import java.util.List;
-
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 /** Coordinates project creation and its required validations. */
@@ -27,10 +26,12 @@ public class ProjectService {
    * @param projectMapper mapper used to convert project entities into DTOs
    */
   public ProjectService(
-          final ProjectRepository projectRepository, final EmployeeClient employeeClient, ProjectMapper projectMapper) {
+      final ProjectRepository projectRepository,
+      final EmployeeClient employeeClient,
+      ProjectMapper projectMapper) {
     this.projectRepository = projectRepository;
     this.employeeClient = employeeClient;
-      this.projectMapper = projectMapper;
+    this.projectMapper = projectMapper;
   }
 
   /**
@@ -60,17 +61,20 @@ public class ProjectService {
   public List<ProjectEntity> findAllProjects() {
     return projectRepository.findAll();
   }
+
   /**
    * Finds a project by its ID.
    *
-   * @param id the ID of the project to find
+   * @param projectId the ID of the project to find
    * @return the project entity if it exists
    * @throws EntityNotFoundException if no project exists with the given ID
    */
-  public ProjectEntity findProjectById(Long id){
-    return projectRepository.findById(id).orElseThrow(() ->
-            // Throw an exception if no project is found with the given ID.
-            new ProjectNotFoundException(id));
+  public ProjectEntity findProjectById(Long projectId) {
+    return projectRepository
+        .findById(projectId)
+        .orElseThrow(
+            () ->
+                // Throw an exception if no project is found with the given ID.
+                new ProjectNotFoundException(projectId));
   }
-
 }
