@@ -33,6 +33,21 @@ jobs:
           java-version: '26'
           cache: maven
 
+      - name: Maven-Abhängigkeiten herunterladen
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if ./mvnw -B -U dependency:go-offline; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Maven-Abhängigkeiten konnten nach 3 Versuchen nicht geladen werden."
+              exit 1
+            fi
+            echo "::warning::Download fehlgeschlagen (Versuch $attempt/3). Neuer Versuch in 10 Sekunden."
+            sleep 10
+          done
+
       - name: Alle Tests ausführen
         run: ./mvnw -B verify
 
