@@ -108,5 +108,4 @@ public class ProjectController {
         ProjectGetDto projectDto = projectMapper.toDto(project);
         return ResponseEntity.ok(projectDto);
     }
-
 }
