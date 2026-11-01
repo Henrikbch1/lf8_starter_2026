@@ -243,7 +243,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary); }
 
 ## 1. Kurzbeschreibung
 
-Die geschützte Projekt-API kann Projekte anlegen und alle gespeicherten Projekte abrufen. Beim Anlegen werden Eingabedaten und Zeitraum geprüft; außerdem muss der verantwortliche Mitarbeiter im Employee-Service existieren.
+Die geschützte Projekt-API kann Projekte anlegen, alle gespeicherten Projekte abrufen und ein einzelnes Projekt anhand seiner ID zurückgeben. Beim Anlegen werden Eingabedaten und Zeitraum geprüft. Außerdem muss der verantwortliche Mitarbeiter im Employee-Service existieren.
 
 Die fokussierten Beispiele liegen in [projects.http](../src/main/java/de/szut/lf8_starter/requests/projects.http). Dort wird das JWT im ersten Request angefordert und als `jwtToken` gespeichert.
 
@@ -286,8 +286,9 @@ flowchart TD
 |---|---|---|---|
 | `POST` | `/projects` | `201 Created`, Projekt in `ProjectGetDto`, `Location`-Header mit URI der Ressource | `400`, `401`, `404`, `422`, `503` |
 | `GET` | `/projects` | `200 OK`, Liste gespeicherter Projekte (bei leerem Bestand `[]`) | `401` |
+| `GET` | `/projects/{id}` | `200 OK`, Projekt als `ProjectGetDto` | `401`, `404` |
 
-`400` meldet ungültige oder unvollständige Eingaben, `404` einen nicht gefundenen verantwortlichen Mitarbeiter, `422` einen Start nach dem geplanten Ende und `503` einen nicht erreichbaren Employee-Service.
+Bei `POST /projects` meldet `400` ungültige oder unvollständige Eingaben. `404` bezeichnet einen nicht gefundenen verantwortlichen Mitarbeiter oder ein nicht vorhandenes Projekt bei `GET /projects/{id}`. `422` steht für einen Start nach dem geplanten Ende. `503` bedeutet, dass der Employee-Service nicht erreichbar ist.
 
 > 💬 **Rückmeldung:** ☐ Ablauf verständlich ☐ ändern ☐ ablehnen · Anmerkungen: …
 
@@ -295,18 +296,18 @@ flowchart TD
 
 ### Request-Felder
 
-Datumswerte müssen das ISO-Format `yyyy-MM-dd` verwenden. `requiredQualificationIds` darf ausgelassen oder als leere Liste übergeben werden; fehlend wird es als leere Menge gespeichert. Für `responsibleEmployeeId` wird geprüft, ob der Mitarbeiter existiert.
+Datumswerte müssen das ISO-Format `yyyy-MM-dd` verwenden. `requiredQualificationIds` darf ausgelassen oder als leere Liste übergeben werden. Ohne Wert wird es als leere Menge gespeichert. Für `responsibleEmployeeId` wird geprüft, ob der Mitarbeiter existiert.
 
 | Feld | Typ | Regel |
 |---|---|---|
 | `designation` | `string` | Pflicht, darf nicht leer sein |
-| `responsibleEmployeeId` | `integer` | Pflicht; Mitarbeiter muss im Employee-Service existieren |
+| `responsibleEmployeeId` | `integer` | Pflicht. Mitarbeiter muss im Employee-Service existieren |
 | `customerId` | `integer` | Pflicht |
 | `customerContactName` | `string` | Optional, im Beispiel gesetzt |
 | `goalComment` | `string` | Optional, im Beispiel gesetzt |
 | `startDate` | `date` | Pflicht, Format `yyyy-MM-dd` |
 | `plannedEndDate` | `date` | Pflicht, muss am oder nach `startDate` liegen |
-| `requiredQualificationIds` | `integer[]` | Optional; ohne Wert wird eine leere Menge gespeichert |
+| `requiredQualificationIds` | `integer[]` | Optional. Ohne Wert wird eine leere Menge gespeichert |
 
 ### Antwort bei erfolgreichem Anlegen
 
@@ -327,7 +328,11 @@ Die ID wird beim Speichern vergeben. `actualEndDate` ist bei einem neu angelegte
 }
 ```
 
-Die ID `1` illustriert nur die Antwortform; der tatsächliche Wert hängt vom Datenbankstand ab.
+Die ID `1` illustriert nur die Antwortform. Der tatsächliche Wert hängt vom Datenbankstand ab.
+
+### Antwort bei erfolgreichem Abruf
+
+`GET /projects/{id}` liefert das Projekt als `ProjectGetDto` mit `200 OK`. Ist die ID unbekannt, antwortet der Endpunkt mit `404 Not Found` und dem Feld `projectId` im Problem-Detail.
 
 ### Zuständigkeiten im Code
 
@@ -337,6 +342,8 @@ Die ID `1` illustriert nur die Antwortform; der tatsächliche Wert hängt vom Da
 | [ProjectCreateDto.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectCreateDto.java) | Request-Felder und Jakarta-Validierung |
 | [ProjectService.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) | Zeitraum- und Mitarbeiterprüfung, Persistierung |
 | [ProjectMapper.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectMapper.java) | DTO-Entity-Zuordnung |
+| [ProjectNotFoundException.java](../src/main/java/de/szut/lf8_starter/project/domain/ProjectNotFoundException.java) | Fehler für eine nicht vorhandene Projekt-ID |
+| [ProjectExceptionHandler.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectExceptionHandler.java) | Problem-Details für nicht gefundene Projekte |
 | [ApiExceptionHandler.java](../src/main/java/de/szut/lf8_starter/common/ApiExceptionHandler.java) | Problem-Details für Eingabe- und Geschäftsfehler |
 
 > 💬 **Rückmeldung:** ☐ Vertrag vollständig ☐ ändern ☐ ablehnen · Anmerkungen: …
@@ -346,15 +353,17 @@ Die ID `1` illustriert nur die Antwortform; der tatsächliche Wert hängt vom Da
 Die Requests sind dokumentiert, aber hier nicht gegen laufende Container ausgeführt. Vor dem Test müssen Docker-Dienste und die LF8-App laufen.
 
 1. Starte die Dienste mit `docker compose up -d` und anschließend `Lf8StarterApplication`.
-2. Führe den ersten Request aus [projects.http](../src/main/java/de/szut/lf8_starter/requests/projects.http) aus. Prüfe, dass ein `access_token` zurückkommt; der Handler speichert ihn als `jwtToken`.
+2. Führe den ersten Request aus [projects.http](../src/main/java/de/szut/lf8_starter/requests/projects.http) aus. Prüfe, dass ein `access_token` zurückkommt. Der Handler speichert ihn als `jwtToken`.
 3. Rufe `GET /projects` vor dem Anlegen auf. Bei leerer Datenbank werden `200 OK` und `[]` erwartet.
-4. Sende den gültigen `POST /projects`. Prüfe `201 Created`, den `Location`-Header und die Antwortfelder; `actualEndDate` sollte `null` sein.
+4. Sende den gültigen `POST /projects`. Prüfe `201 Created`, den `Location`-Header und die Antwortfelder. `actualEndDate` sollte `null` sein.
 5. Rufe `GET /projects` erneut auf und prüfe, ob das angelegte Projekt in der Liste enthalten ist.
-6. Führe die drei Negativbeispiele aus: Start nach Ende ergibt `422`, Mitarbeiter-ID `999` ergibt bei unbekanntem Mitarbeiter `404`, fehlende `designation` ergibt `400`.
-7. Prüfe den Grenzfall `startDate` gleich `plannedEndDate`: Er ist gültig, da nur ein Start nach dem Enddatum abgelehnt wird.
-8. Prüfe in einer isolierten Testumgebung mit nicht erreichbarem Employee-Service den Fehler `503`.
-9. Sende einen Projekt-Request ohne Authorization-Header oder mit abgelaufenem Token und prüfe `401`.
-10. Öffne die Dokumentation und die Request-Datei erneut in der Vorschau; prüfe Tabellen, Diagramm und Codeblöcke auch bei schmalem Editorfenster.
+6. Rufe `GET /projects/{id}` für ein vorhandenes Projekt auf. Prüfe `200 OK` und die Projektfelder.
+7. Rufe `GET /projects/999999` für eine unbekannte ID auf. Prüfe `404 Not Found` und das Feld `projectId` in der Fehlerantwort.
+8. Führe die drei POST-Negativbeispiele aus: Start nach Ende ergibt `422`, Mitarbeiter-ID `999` ergibt bei unbekanntem Mitarbeiter `404`, fehlende `designation` ergibt `400`.
+9. Prüfe den Grenzfall `startDate` gleich `plannedEndDate`: Er ist gültig, da nur ein Start nach dem Enddatum abgelehnt wird.
+10. Prüfe in einer isolierten Testumgebung mit nicht erreichbarem Employee-Service den Fehler `503`.
+11. Sende einen Projekt-Request ohne Authorization-Header oder mit abgelaufenem Token und prüfe `401`.
+12. Öffne die Dokumentation und die Request-Datei erneut in der Vorschau. Prüfe Tabellen, Diagramm und Codeblöcke auch bei schmalem Editorfenster.
 
 > 💬 **Rückmeldung:** ☐ Prüfschritte ausreichend ☐ ändern ☐ ablehnen · Anmerkungen: …
 

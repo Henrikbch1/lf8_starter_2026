@@ -20,6 +20,7 @@ import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
 import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
+import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.Nested;
@@ -34,6 +35,7 @@ class ProjectServiceTest {
 
     private static final long FIRST_PROJECT_ID = 1L;
     private static final long SECOND_PROJECT_ID = 2L;
+    private static final long MISSING_PROJECT_ID = 999L;
     private static final long RESPONSIBLE_EMPLOYEE_ID = 1L;
     private static final String PROJECT_ALPHA_DESIGNATION = "Project Alpha";
     private static final String PROJECT_BETA_DESIGNATION = "Project Beta";
@@ -67,6 +69,7 @@ class ProjectServiceTest {
             List<ProjectEntity> projects = underTest.findAllProjects();
             // Assert
             assertThat(projects).isEmpty();
+            verify(projectRepository).findAll();
         }
 
         @Test
@@ -82,12 +85,51 @@ class ProjectServiceTest {
             // Act
             List<ProjectEntity> projects = underTest.findAllProjects();
             // Assert
-            assertThat(projects)
-                    .extracting(ProjectEntity::getId)
-                    .containsExactly(FIRST_PROJECT_ID, SECOND_PROJECT_ID);
-            assertThat(projects)
-                    .extracting(ProjectEntity::getDesignation)
-                    .containsExactly(PROJECT_ALPHA_DESIGNATION, PROJECT_BETA_DESIGNATION);
+            assertThat(projects).hasSize(2);
+            assertThat(projects.getFirst().getId()).isEqualTo(FIRST_PROJECT_ID);
+            assertThat(projects.getFirst().getDesignation()).isEqualTo(PROJECT_ALPHA_DESIGNATION);
+            assertThat(projects.getLast().getId()).isEqualTo(SECOND_PROJECT_ID);
+            assertThat(projects.getLast().getDesignation()).isEqualTo(PROJECT_BETA_DESIGNATION);
+            verify(projectRepository).findAll();
+        }
+    }
+
+    @Nested
+    class FindProjectById {
+
+        @Test
+        void findProjectById_returnsProject() {
+            // Arrange
+            ProjectEntity project = new ProjectEntity();
+            project.setId(FIRST_PROJECT_ID);
+            project.setDesignation(PROJECT_ALPHA_DESIGNATION);
+            when(projectRepository.findById(FIRST_PROJECT_ID)).thenReturn(Optional.of(project));
+            // Act
+            ProjectEntity result = underTest.findProjectById(FIRST_PROJECT_ID);
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo(FIRST_PROJECT_ID);
+            assertThat(result.getDesignation()).isEqualTo(PROJECT_ALPHA_DESIGNATION);
+            verify(projectRepository).findById(FIRST_PROJECT_ID);
+        }
+
+        @Test
+        void findProjectById_missingProject_throwsProjectNotFoundException() {
+            // Arrange
+            when(projectRepository.findById(MISSING_PROJECT_ID)).thenReturn(Optional.empty());
+            // Act
+            ThrowableAssert.ThrowingCallable action =
+                    () -> underTest.findProjectById(MISSING_PROJECT_ID);
+            // Assert
+            assertThatThrownBy(action)
+                    .isInstanceOfSatisfying(
+                            ProjectNotFoundException.class,
+                            exception -> {
+                                assertThat(exception.getProjectId()).isEqualTo(MISSING_PROJECT_ID);
+                                assertThat(exception)
+                                        .hasMessage("Project with ID 999 not found");
+                            });
+            verify(projectRepository).findById(MISSING_PROJECT_ID);
         }
     }
 

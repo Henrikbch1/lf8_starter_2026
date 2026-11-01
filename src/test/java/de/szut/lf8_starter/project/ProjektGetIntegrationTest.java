@@ -81,4 +81,32 @@ class ProjectGetIntegrationTest extends AbstractIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
+
+    /**
+     * Verifies that GET /projects/{id} returns HTTP 200
+     * and the requested project as JSON.
+     */
+    @Test
+    void getProjectById_shouldReturn200AndProject() throws Exception{
+        // Arrange: Create and Save a project
+        ProjectEntity project = new ProjectEntity();
+        project.setDesignation("Project Beta");
+        project.setCustomerId(2L);
+        project.setResponsibleEmployeeId(3L);
+        project.setStartDate(LocalDate.of(2026, 10, 1));
+        project.setPlannedEndDate(LocalDate.of(2026,12,31));
+        ProjectEntity savedProject = projectRepository.saveAndFlush(project);
+
+        //Act & Assert: Retrieve the project by its ID
+        mockMvc.perform(get("/projects/{id}", savedProject.getId())
+                .with(jwt())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(savedProject.getId()))
+                .andExpect(jsonPath("$.designation").value("Project Beta"))
+                .andExpect(jsonPath("$.customerId").value(2))
+                .andExpect(jsonPath("$.responsibleEmployeeId").value(3));
+    }
+
 }
