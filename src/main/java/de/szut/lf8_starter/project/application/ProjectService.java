@@ -77,4 +77,17 @@ public class ProjectService {
                 // Throw an exception if no project is found with the given ID.
                 new ProjectNotFoundException(projectId));
   }
+
+  /**
+   * Deletes a project by its ID.
+   *
+   * @param projectId the ID of the project to delete
+   * @throws ProjectNotFoundException if the project does not exist
+   */
+  public void deleteById(final Long projectId){
+    // Find the project and throw an exception if it does not exist.
+    ProjectEntity project = findProjectById(projectId);
+    // Delete the existing project from the database.
+    projectRepository.delete(project);
+  }
 }
