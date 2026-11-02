@@ -6,7 +6,9 @@
 POST http://localhost:9000/default/token
 Content-Type: application/x-www-form-urlencoded
 
-grant_type=client_credentials&client_id=test-client&client_secret=test-secret
+grant_type = client_credentials &
+client_id = test-client &
+client_secret = test-secret
 
 # Extracts the access token from the response and stores it globally.
 # The "jwtToken" variable can be reused in other HTTP requests.
@@ -54,4 +56,29 @@ Authorization: Bearer {{jwtToken}}
 # Verifies that retrieving a project by ID requires authentication.
 # Expected: 401 Unauthorized.
 GET http://localhost:8080/projects/1
+Accept: application/json
+
+### T004 - Delete an existing project (authenticated)
+
+# Deletes an existing project using its ID.
+# Replace 1 with the ID of a project that exists in the database.
+# Expected: 204 No Content with an empty response body.
+DELETE http://localhost:8080/projects/1
+Authorization: Bearer {{jwtToken}}
+
+
+### T004 - Delete a project that does not exist
+
+# Verifies that deleting a non-existing project returns HTTP 404.
+# The error response must contain the requested project ID.
+# Expected: 404 Not Found.
+DELETE http://localhost:8080/projects/999999
+Authorization: Bearer {{jwtToken}}
+
+
+### T004 - Delete a project without authentication
+
+# Verifies that deleting a project requires authentication.
+# Expected: 401 Unauthorized.
+DELETE http://localhost:8080/projects/1
 Accept: application/json
