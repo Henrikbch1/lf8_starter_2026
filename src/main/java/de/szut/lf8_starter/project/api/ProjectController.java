@@ -108,4 +108,26 @@ public class ProjectController {
         ProjectGetDto projectDto = projectMapper.toDto(project);
         return ResponseEntity.ok(projectDto);
     }
+
+    /**
+     * Deletes a project by its ID.
+     *
+     * @param id the ID of the project to delete
+     * @return HTTP 204 No Content if the project was deleted successfully
+     * @throws ProjectNotFoundException if no project exists with the given ID
+     */
+    @Operation(
+        summary = "Delete a project by ID",
+        description = "Deletes an existing project by its ID."
+    )
+    @ApiResponse(responseCode = "204", description = "Project deleted successfully")
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @ApiResponse(responseCode = "404", description = "Project with the specified ID not found")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProjectById(@PathVariable Long id){
+        // Delete the project using the service layer.
+        projectService.deleteById(id);
+        // Return HTTP 204 without a response body.
+        return ResponseEntity.noContent().build();
+    }
 }
