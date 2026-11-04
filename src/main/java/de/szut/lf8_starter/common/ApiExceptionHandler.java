@@ -6,7 +6,7 @@ import java.util.Map;
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
 import de.szut.lf8_starter.hello.HelloNotFoundException;
-import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;

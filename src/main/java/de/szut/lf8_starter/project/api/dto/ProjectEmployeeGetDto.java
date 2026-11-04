@@ -1,4 +1,4 @@
-package de.szut.lf8_starter.project.api;
+package de.szut.lf8_starter.project.api.dto;
 
 import de.szut.lf8_starter.project.domain.ProjectEmployeeAssignment;
 

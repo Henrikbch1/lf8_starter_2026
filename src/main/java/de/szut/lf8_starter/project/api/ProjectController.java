@@ -5,16 +5,21 @@ import java.util.List;
 
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
+import de.szut.lf8_starter.project.api.dto.ProjectCreateDto;
+import de.szut.lf8_starter.project.api.dto.ProjectEmployeeGetDto;
+import de.szut.lf8_starter.project.api.dto.ProjectEmployeesGetDto;
+import de.szut.lf8_starter.project.api.dto.ProjectGetDto;
 import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
-import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
-import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
+import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,21 +36,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  */
 @RestController
 @RequestMapping("/projects")
+@RequiredArgsConstructor
 public class ProjectController {
 
     private final ProjectService projectService;
     private final ProjectMapper projectMapper;
-
-    /**
-     * Creates a controller using the project service and mapper.
-     *
-     * @param projectService service that validates and persists projects
-     * @param projectMapper mapper between project requests, entities, and responses
-     */
-    public ProjectController(final ProjectService projectService, final ProjectMapper projectMapper) {
-        this.projectService = projectService;
-        this.projectMapper = projectMapper;
-    }
 
     /**
      * Creates a project and returns its representation and resource location.

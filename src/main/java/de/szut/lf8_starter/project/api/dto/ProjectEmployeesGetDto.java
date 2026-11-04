@@ -1,4 +1,4 @@
-package de.szut.lf8_starter.project.api;
+package de.szut.lf8_starter.project.api.dto;
 
 import java.util.List;
 import java.util.Objects;

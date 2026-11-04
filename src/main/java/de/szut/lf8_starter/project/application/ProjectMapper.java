@@ -2,8 +2,8 @@ package de.szut.lf8_starter.project.application;
 
 import java.util.HashSet;
 
-import de.szut.lf8_starter.project.api.ProjectCreateDto;
-import de.szut.lf8_starter.project.api.ProjectGetDto;
+import de.szut.lf8_starter.project.api.dto.ProjectCreateDto;
+import de.szut.lf8_starter.project.api.dto.ProjectGetDto;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import org.springframework.stereotype.Component;
 

@@ -2,42 +2,25 @@ package de.szut.lf8_starter.project.application;
 
 import de.szut.lf8_starter.employee.EmployeeClient;
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
-import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEmployeeAssignment;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
-import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
+import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectEmployeeAssignmentRepository;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /** Coordinates project creation and its required validations. */
 @Service
+@RequiredArgsConstructor
 public class ProjectService {
 
   private final ProjectRepository projectRepository;
   private final EmployeeClient employeeClient;
   private final ProjectMapper projectMapper;
   private final ProjectEmployeeAssignmentRepository projectEmployeeAssignmentRepository;
-
-  /**
-   * Creates a service using the project repository, employee client and assignment repository.
-   *
-   * @param projectRepository repository used to persist projects
-   * @param employeeClient client used to verify responsible employees
-   * @param projectMapper mapper used to convert project entities into DTOs
-   * @param projectEmployeeAssignmentRepository repository used to read project employee assignments
-   */
-  public ProjectService(
-      final ProjectRepository projectRepository,
-      final EmployeeClient employeeClient,
-      ProjectMapper projectMapper,
-      final ProjectEmployeeAssignmentRepository projectEmployeeAssignmentRepository) {
-    this.projectRepository = projectRepository;
-    this.employeeClient = employeeClient;
-    this.projectMapper = projectMapper;
-    this.projectEmployeeAssignmentRepository = projectEmployeeAssignmentRepository;
-  }
 
   /**
    * Validates and persists a project.
@@ -59,9 +42,9 @@ public class ProjectService {
   }
 
   /**
-   * Retrieves all projects from the database and converts them into response DTOs.
+   * Retrieves all projects from the database.
    *
-   * @return a list of all projects as ProjectGetDto objects, or an empty list if no projects exist
+   * @return all projects as entities, or an empty list if no projects exist
    */
   public List<ProjectEntity> findAllProjects() {
     return projectRepository.findAll();
