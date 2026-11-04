@@ -1,4 +1,5 @@
 package de.szut.lf8_starter.project.domain;
+
 import lombok.Getter;
 
 /**
@@ -19,4 +20,3 @@ public final class ProjectNotFoundException extends RuntimeException {
     this.projectId = projectId;
   }
 }
-

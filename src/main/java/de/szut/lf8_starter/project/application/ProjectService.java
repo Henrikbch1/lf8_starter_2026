@@ -6,7 +6,6 @@ import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -67,7 +66,7 @@ public class ProjectService {
    *
    * @param projectId the ID of the project to find
    * @return the project entity if it exists
-   * @throws EntityNotFoundException if no project exists with the given ID
+   * @throws ProjectNotFoundException if no project exists with the given ID
    */
   public ProjectEntity findProjectById(Long projectId) {
     return projectRepository

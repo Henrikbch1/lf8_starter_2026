@@ -1,14 +1,29 @@
 package de.szut.lf8_starter.project;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import de.szut.lf8_starter.employee.EmployeeClient;
+import de.szut.lf8_starter.employee.EmployeeDto;
+import de.szut.lf8_starter.employee.EmployeeNotFoundException;
+import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
+import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
+import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
-import java.util.List;
-import java.util.Optional;
+import org.assertj.core.api.ThrowableAssert;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,84 +33,174 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ProjectServiceTest {
 
-  @Mock private ProjectRepository projectRepository;
-  @InjectMocks private ProjectService projectService;
+    private static final long FIRST_PROJECT_ID = 1L;
+    private static final long SECOND_PROJECT_ID = 2L;
+    private static final long MISSING_PROJECT_ID = 999L;
+    private static final long RESPONSIBLE_EMPLOYEE_ID = 1L;
+    private static final String PROJECT_ALPHA_DESIGNATION = "Project Alpha";
+    private static final String PROJECT_BETA_DESIGNATION = "Project Beta";
+    private static final String PROJECT_GAMMA_DESIGNATION = "Project Gamma";
+    private static final String EMPLOYEE_FIRST_NAME = "Max";
+    private static final String EMPLOYEE_LAST_NAME = "Mustermann";
+    private static final String EMPLOYEE_SERVICE_CONNECTION_ERROR = "connection refused";
+    private static final LocalDate PROJECT_START_DATE = LocalDate.of(2026, 11, 1);
+    private static final LocalDate PROJECT_END_DATE = LocalDate.of(2026, 12, 31);
 
-  /** Verifies that an empty list is returned when no projects exist. */
-  @Test
-  void findAllProjects_shouldReturnEmptyList() {
-    // Arrange
-    when(projectRepository.findAll()).thenReturn(List.of());
-    // Act
-    List<ProjectEntity> result = projectService.findAllProjects();
-    // Assert
-    assertTrue(result.isEmpty());
-    verify(projectRepository, times(1)).findAll();
-  }
+    @Mock
+    private ProjectRepository projectRepository;
 
-  /** Verifies that all existing projects are correctly returned. */
-  @Test
-  void findAllProjects_shouldReturnAllProjects() {
-    // Arrange: Create two test projects
-    ProjectEntity project1 = new ProjectEntity();
-    project1.setId(1L);
-    project1.setDesignation("Project Alpha");
-    ProjectEntity project2 = new ProjectEntity();
-    project2.setId(2L);
-    project2.setDesignation("Project Beta");
-    // Mock the repository to return both projects
-    when(projectRepository.findAll()).thenReturn(List.of(project1, project2));
-    // Act: Call the service method
-    List<ProjectEntity> result = projectService.findAllProjects();
-    // Assert: Verify that two projects are returned
-    assertEquals(2, result.size());
-    // Verify the first project
-    assertEquals(1L, result.get(0).getId());
-    assertEquals("Project Alpha", result.get(0).getDesignation());
-    // Verify the second project
-    assertEquals(2L, result.get(1).getId());
-    assertEquals("Project Beta", result.get(1).getDesignation());
-    // Verify that the repository method is called exactly once
-    verify(projectRepository, times(1)).findAll();
-  }
+    @Mock
+    private EmployeeClient employeeClient;
 
-  /** Verifies that an existing project is returned by its ID. */
-  @Test
-  void findProjectById_shouldReturnProject() {
-    // Arrange: Create a project with a specific ID
-    Long projectId = 1L;
-    ProjectEntity project = new ProjectEntity();
-    project.setId(projectId);
-    project.setDesignation("Project Alpha");
-    // Mock the repository response
-    when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
-    // Act: Find the project by its ID
-    ProjectEntity result = projectService.findProjectById(projectId);
-    // Assert: Verify the returned project
-    assertNotNull(result);
-    assertEquals(projectId, result.getId());
-    assertEquals("Project Alpha", result.getDesignation());
-    // Verify that the repository was called exactly once
-    verify(projectRepository, times(1)).findById(projectId);
-  }
+    @Mock
+    private ProjectMapper projectMapper;
 
-  /**
-   * Verifies that a ProjectNotFoundException is thrown when no project exists with the given ID.
-   */
-  @Test
-  void findProjectById_shouldThrowExceptionWhenProjectDoesNotExist() {
-    // Arrange: Define a non-existing project ID
-    Long projectId = 999L;
-    // Mock the repository to return no project
-    when(projectRepository.findById(projectId)).thenReturn(Optional.empty());
-    // Act & Assert: Verify that the exception is thrown
-    ProjectNotFoundException exception =
-        assertThrows(
-            ProjectNotFoundException.class, () -> projectService.findProjectById(projectId));
-    // Assert: Verify the exception contains the correct project ID
-    assertEquals(projectId, exception.getProjectId());
-    assertEquals("Project with ID 999 not found", exception.getMessage());
-    // Verify that the repository was called exactly once
-    verify(projectRepository, times(1)).findById(projectId);
-  }
+    @InjectMocks
+    private ProjectService underTest;
+
+    @Nested
+    class FindAllProjects {
+
+        @Test
+        void findAllProjects_returnsEmptyList() {
+            // Arrange
+            when(projectRepository.findAll()).thenReturn(List.of());
+            // Act
+            List<ProjectEntity> projects = underTest.findAllProjects();
+            // Assert
+            assertThat(projects).isEmpty();
+            verify(projectRepository).findAll();
+        }
+
+        @Test
+        void findAllProjects_returnsAllProjects() {
+            // Arrange
+            ProjectEntity firstProject = new ProjectEntity();
+            firstProject.setId(FIRST_PROJECT_ID);
+            firstProject.setDesignation(PROJECT_ALPHA_DESIGNATION);
+            ProjectEntity secondProject = new ProjectEntity();
+            secondProject.setId(SECOND_PROJECT_ID);
+            secondProject.setDesignation(PROJECT_BETA_DESIGNATION);
+            when(projectRepository.findAll()).thenReturn(List.of(firstProject, secondProject));
+            // Act
+            List<ProjectEntity> projects = underTest.findAllProjects();
+            // Assert
+            assertThat(projects).hasSize(2);
+            assertThat(projects.getFirst().getId()).isEqualTo(FIRST_PROJECT_ID);
+            assertThat(projects.getFirst().getDesignation()).isEqualTo(PROJECT_ALPHA_DESIGNATION);
+            assertThat(projects.getLast().getId()).isEqualTo(SECOND_PROJECT_ID);
+            assertThat(projects.getLast().getDesignation()).isEqualTo(PROJECT_BETA_DESIGNATION);
+            verify(projectRepository).findAll();
+        }
+    }
+
+    @Nested
+    class FindProjectById {
+
+        @Test
+        void findProjectById_returnsProject() {
+            // Arrange
+            ProjectEntity project = new ProjectEntity();
+            project.setId(FIRST_PROJECT_ID);
+            project.setDesignation(PROJECT_ALPHA_DESIGNATION);
+            when(projectRepository.findById(FIRST_PROJECT_ID)).thenReturn(Optional.of(project));
+            // Act
+            ProjectEntity result = underTest.findProjectById(FIRST_PROJECT_ID);
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo(FIRST_PROJECT_ID);
+            assertThat(result.getDesignation()).isEqualTo(PROJECT_ALPHA_DESIGNATION);
+            verify(projectRepository).findById(FIRST_PROJECT_ID);
+        }
+
+        @Test
+        void findProjectById_missingProject_throwsProjectNotFoundException() {
+            // Arrange
+            when(projectRepository.findById(MISSING_PROJECT_ID)).thenReturn(Optional.empty());
+            // Act
+            ThrowableAssert.ThrowingCallable action =
+                    () -> underTest.findProjectById(MISSING_PROJECT_ID);
+            // Assert
+            assertThatThrownBy(action)
+                    .isInstanceOfSatisfying(
+                            ProjectNotFoundException.class,
+                            exception -> {
+                                assertThat(exception.getProjectId()).isEqualTo(MISSING_PROJECT_ID);
+                                assertThat(exception)
+                                        .hasMessage("Project with ID 999 not found");
+                            });
+            verify(projectRepository).findById(MISSING_PROJECT_ID);
+        }
+    }
+
+    @Nested
+    class Create {
+
+        @Test
+        void create_startAfterEnd_throwsInvalidProjectPeriodException() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_END_DATE, PROJECT_START_DATE);
+            // Act
+            ThrowableAssert.ThrowingCallable action = () -> underTest.create(project);
+            // Assert
+            assertThatThrownBy(action).isInstanceOf(InvalidProjectPeriodException.class);
+            verifyNoInteractions(employeeClient, projectRepository);
+        }
+
+        @Test
+        void create_startEqualsEnd_savesProject() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_START_DATE, PROJECT_START_DATE);
+            EmployeeDto employee = new EmployeeDto(
+                    RESPONSIBLE_EMPLOYEE_ID,
+                    EMPLOYEE_FIRST_NAME,
+                    EMPLOYEE_LAST_NAME,
+                    List.of());
+            when(employeeClient.findById(RESPONSIBLE_EMPLOYEE_ID)).thenReturn(Optional.of(employee));
+            when(projectRepository.save(project)).thenReturn(project);
+            // Act
+            ProjectEntity result = underTest.create(project);
+            // Assert
+            assertThat(result).isSameAs(project);
+            verify(employeeClient).findById(RESPONSIBLE_EMPLOYEE_ID);
+            verify(projectRepository).save(project);
+        }
+
+        @Test
+        void create_responsibleEmployeeNotFound_throwsEmployeeNotFoundException() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            when(employeeClient.findById(RESPONSIBLE_EMPLOYEE_ID)).thenReturn(Optional.empty());
+            // Act
+            ThrowableAssert.ThrowingCallable action = () -> underTest.create(project);
+            // Assert
+            assertThatThrownBy(action).isInstanceOf(EmployeeNotFoundException.class);
+            verify(employeeClient).findById(RESPONSIBLE_EMPLOYEE_ID);
+            verify(projectRepository, never()).save(any(ProjectEntity.class));
+        }
+
+        @Test
+        void create_employeeServiceUnavailable_throwsEmployeeServiceUnavailableException() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            when(employeeClient.findById(RESPONSIBLE_EMPLOYEE_ID))
+                    .thenThrow(new EmployeeServiceUnavailableException(
+                            new RuntimeException(EMPLOYEE_SERVICE_CONNECTION_ERROR)));
+            // Act
+            ThrowableAssert.ThrowingCallable action = () -> underTest.create(project);
+            // Assert
+            assertThatThrownBy(action).isInstanceOf(EmployeeServiceUnavailableException.class);
+            verify(employeeClient).findById(RESPONSIBLE_EMPLOYEE_ID);
+            verify(projectRepository, never()).save(any(ProjectEntity.class));
+        }
+    }
+
+    private static ProjectEntity projectWithPeriod(LocalDate startDate, LocalDate plannedEndDate) {
+        ProjectEntity project = new ProjectEntity();
+        project.setDesignation(PROJECT_GAMMA_DESIGNATION);
+        project.setResponsibleEmployeeId(RESPONSIBLE_EMPLOYEE_ID);
+        project.setStartDate(startDate);
+        project.setPlannedEndDate(plannedEndDate);
+        return project;
+    }
 }
