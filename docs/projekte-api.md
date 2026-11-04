@@ -387,14 +387,14 @@ Der Abruf fragt den Employee-Service nicht ab, die Zuordnungen stammen aus der D
 | Datei | Verantwortung |
 |---|---|
 | [ProjectController.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) | REST-Endpunkte, Statuscodes und `Location`-Header, Abruf in [findProjectEmployees](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) |
-| [ProjectCreateDto.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectCreateDto.java) | Request-Felder und Jakarta-Validierung |
+| [ProjectCreateDto.java](../src/main/java/de/szut/lf8_starter/project/api/dto/ProjectCreateDto.java) | Request-Felder und Jakarta-Validierung |
 | [ProjectService.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) | Zeitraum- und Mitarbeiterprüfung, Persistierung, Abruf der Zuordnungen in [findEmployeeAssignments](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) |
 | [ProjectMapper.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectMapper.java) | DTO-Entity-Zuordnung |
-| [ProjectNotFoundException.java](../src/main/java/de/szut/lf8_starter/project/domain/ProjectNotFoundException.java) | Fehler für eine nicht vorhandene Projekt-ID |
-| [ProjectExceptionHandler.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectExceptionHandler.java) | Problem-Details für nicht gefundene Projekte |
+| [ProjectNotFoundException.java](../src/main/java/de/szut/lf8_starter/project/domain/exception/ProjectNotFoundException.java) | Fehler für eine nicht vorhandene Projekt-ID |
+| [ProjectExceptionHandler.java](../src/main/java/de/szut/lf8_starter/project/api/exception/ProjectExceptionHandler.java) | Problem-Details für nicht gefundene Projekte |
 | [ApiExceptionHandler.java](../src/main/java/de/szut/lf8_starter/common/ApiExceptionHandler.java) | Problem-Details für Eingabe- und Geschäftsfehler |
-| [ProjectEmployeesGetDto.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectEmployeesGetDto.java) | Antwort mit Projekt-ID, Bezeichnung und Mitarbeiterliste |
-| [ProjectEmployeeGetDto.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectEmployeeGetDto.java) | Mitarbeiter-ID und Rolle je Zuordnung |
+| [ProjectEmployeesGetDto.java](../src/main/java/de/szut/lf8_starter/project/api/dto/ProjectEmployeesGetDto.java) | Antwort mit Projekt-ID, Bezeichnung und Mitarbeiterliste |
+| [ProjectEmployeeGetDto.java](../src/main/java/de/szut/lf8_starter/project/api/dto/ProjectEmployeeGetDto.java) | Mitarbeiter-ID und Rolle je Zuordnung |
 | [ProjectEmployeeAssignment.java](../src/main/java/de/szut/lf8_starter/project/domain/ProjectEmployeeAssignment.java) | Zuordnung eines Mitarbeiters mit Rolle zu einem Projekt |
 | [ProjectEmployeeAssignmentRepository.java](../src/main/java/de/szut/lf8_starter/project/persistence/ProjectEmployeeAssignmentRepository.java) | Abfrage der Zuordnungen eines Projekts |
 | [ProjectEmployeesIntegrationTest.java](../src/test/java/de/szut/lf8_starter/project/ProjectEmployeesIntegrationTest.java) | Integrationstests für Zuordnung, leere Liste, 404, 401 und Swagger-Dokumentation |
