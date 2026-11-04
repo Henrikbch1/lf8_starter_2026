@@ -245,7 +245,9 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary); }
 
 Die geschützte Projekt-API kann Projekte anlegen, alle gespeicherten Projekte abrufen und ein einzelnes Projekt anhand seiner ID zurückgeben. Beim Anlegen werden Eingabedaten und Zeitraum geprüft. Außerdem muss der verantwortliche Mitarbeiter im Employee-Service existieren.
 
-Die fokussierten Beispiele liegen in [projects.http](../src/main/java/de/szut/lf8_starter/requests/projects.http). Dort wird das JWT im ersten Request angefordert und als `jwtToken` gespeichert.
+Zusätzlich liefert `GET /projects/{id}/employees` die einem Projekt zugeordneten Mitarbeiter mit ihrer Rolle. Die Rolle ist die ID einer Qualifikation, die im Employee-Service definiert ist. Hat das Projekt keine Zuordnung, ist `employees` eine leere Liste.
+
+Die fokussierten Beispiele liegen in [projects.http](../src/main/java/de/szut/lf8_starter/requests/projects.http). Dort wird das JWT im ersten Request angefordert und als `jwtToken` gespeichert. Der Abruf der Mitarbeiter eines Projekts steht in [SampleRequests.http](../SampleRequests.http) und nutzt das Token aus [GetToken.http](../GetToken.http).
 
 > **Vorschau:** Für das vollständige Layout die Markdown-Vorschau in IntelliJ oder VS Code öffnen. In VS Code: `Ctrl+Shift+V`; für Mermaid-Diagramme die Erweiterung `bierner.markdown-mermaid` verwenden.
 
@@ -287,8 +289,9 @@ flowchart TD
 | `POST` | `/projects` | `201 Created`, Projekt in `ProjectGetDto`, `Location`-Header mit URI der Ressource | `400`, `401`, `404`, `422`, `503` |
 | `GET` | `/projects` | `200 OK`, Liste gespeicherter Projekte (bei leerem Bestand `[]`) | `401` |
 | `GET` | `/projects/{id}` | `200 OK`, Projekt als `ProjectGetDto` | `401`, `404` |
+| `GET` | `/projects/{id}/employees` | `200 OK`, Projekt-ID, Bezeichnung und Mitarbeiter mit Rolle (ohne Zuordnung `employees: []`) | `401`, `404` |
 
-Bei `POST /projects` meldet `400` ungültige oder unvollständige Eingaben. `404` bezeichnet einen nicht gefundenen verantwortlichen Mitarbeiter oder ein nicht vorhandenes Projekt bei `GET /projects/{id}`. `422` steht für einen Start nach dem geplanten Ende. `503` bedeutet, dass der Employee-Service nicht erreichbar ist.
+Bei `POST /projects` meldet `400` ungültige oder unvollständige Eingaben. `404` bezeichnet einen nicht gefundenen verantwortlichen Mitarbeiter oder ein nicht vorhandenes Projekt bei `GET /projects/{id}` und `GET /projects/{id}/employees`. `422` steht für einen Start nach dem geplanten Ende. `503` bedeutet, dass der Employee-Service nicht erreichbar ist.
 
 > 💬 **Rückmeldung:** ☐ Ablauf verständlich ☐ ändern ☐ ablehnen · Anmerkungen: …
 
@@ -334,17 +337,67 @@ Die ID `1` illustriert nur die Antwortform. Der tatsächliche Wert hängt vom Da
 
 `GET /projects/{id}` liefert das Projekt als `ProjectGetDto` mit `200 OK`. Ist die ID unbekannt, antwortet der Endpunkt mit `404 Not Found` und dem Feld `projectId` im Problem-Detail.
 
+### Antwort bei Mitarbeitern eines Projekts
+
+`GET /projects/{id}/employees` liefert mit `200 OK` die Projekt-ID, die Bezeichnung und die zugeordneten Mitarbeiter. Jeder Eintrag nennt die `employeeId` und die `role`. Die Werte im Beispiel sind frei gewählt.
+
+```json
+{
+  "projectId": 1,
+  "designation": "Rollout Nordlicht",
+  "employees": [
+    {
+      "employeeId": 7,
+      "role": 3
+    }
+  ]
+}
+```
+
+Hat das Projekt keine Zuordnung, enthält `employees` eine leere Liste:
+
+```json
+{
+  "projectId": 1,
+  "designation": "Rollout Nordlicht",
+  "employees": []
+}
+```
+
+Ist die Projekt-ID unbekannt, antwortet der Endpunkt mit `404 Not Found` als Problem-Details. Das Feld `detail` nennt die ID, und `projectId` enthält sie als eigenes Feld:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Project not found",
+  "status": 404,
+  "detail": "Project with ID 999999 not found",
+  "projectId": 999999
+}
+```
+
+Der Abruf fragt den Employee-Service nicht ab, die Zuordnungen stammen aus der Datenbank. Fehlt das Token oder ist es ungültig, antwortet der Endpunkt mit `401 Unauthorized`. Das Löschen eines Projekts über T004 entfernt seine Zuordnungen über die FK-Kaskade.
+
+### Gemeinsames Modell mit T005
+
+> **Hinweis:** Integrationspunkt zwischen T005 und T006. Beide Tickets nutzen das Modell `ProjectEmployeeAssignment` mit der Tabelle `project_employee_assignments` und den Spalten `project_id`, `employee_id` und `qualification_id`. T005 (Anlegen von Zuordnungen) ist noch nicht integriert und in diesem Stand nicht vorhanden. Beim Merge müssen T005 und T006 dieses Modell gemeinsam abstimmen. Bis dahin gibt es keinen POST-Endpunkt für Zuordnungen.
+
 ### Zuständigkeiten im Code
 
 | Datei | Verantwortung |
 |---|---|
-| [ProjectController.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) | REST-Endpunkte, Statuscodes und `Location`-Header |
+| [ProjectController.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) | REST-Endpunkte, Statuscodes und `Location`-Header, Abruf in [findProjectEmployees](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) |
 | [ProjectCreateDto.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectCreateDto.java) | Request-Felder und Jakarta-Validierung |
-| [ProjectService.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) | Zeitraum- und Mitarbeiterprüfung, Persistierung |
+| [ProjectService.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) | Zeitraum- und Mitarbeiterprüfung, Persistierung, Abruf der Zuordnungen in [findEmployeeAssignments](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) |
 | [ProjectMapper.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectMapper.java) | DTO-Entity-Zuordnung |
 | [ProjectNotFoundException.java](../src/main/java/de/szut/lf8_starter/project/domain/ProjectNotFoundException.java) | Fehler für eine nicht vorhandene Projekt-ID |
 | [ProjectExceptionHandler.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectExceptionHandler.java) | Problem-Details für nicht gefundene Projekte |
 | [ApiExceptionHandler.java](../src/main/java/de/szut/lf8_starter/common/ApiExceptionHandler.java) | Problem-Details für Eingabe- und Geschäftsfehler |
+| [ProjectEmployeesGetDto.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectEmployeesGetDto.java) | Antwort mit Projekt-ID, Bezeichnung und Mitarbeiterliste |
+| [ProjectEmployeeGetDto.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectEmployeeGetDto.java) | Mitarbeiter-ID und Rolle je Zuordnung |
+| [ProjectEmployeeAssignment.java](../src/main/java/de/szut/lf8_starter/project/domain/ProjectEmployeeAssignment.java) | Zuordnung eines Mitarbeiters mit Rolle zu einem Projekt |
+| [ProjectEmployeeAssignmentRepository.java](../src/main/java/de/szut/lf8_starter/project/persistence/ProjectEmployeeAssignmentRepository.java) | Abfrage der Zuordnungen eines Projekts |
+| [ProjectEmployeesIntegrationTest.java](../src/test/java/de/szut/lf8_starter/project/ProjectEmployeesIntegrationTest.java) | Integrationstests für Zuordnung, leere Liste, 404, 401 und Swagger-Dokumentation |
 
 > 💬 **Rückmeldung:** ☐ Vertrag vollständig ☐ ändern ☐ ablehnen · Anmerkungen: …
 
@@ -364,6 +417,15 @@ Die Requests sind dokumentiert, aber hier nicht gegen laufende Container ausgef�
 10. Prüfe in einer isolierten Testumgebung mit nicht erreichbarem Employee-Service den Fehler `503`.
 11. Sende einen Projekt-Request ohne Authorization-Header oder mit abgelaufenem Token und prüfe `401`.
 12. Öffne die Dokumentation und die Request-Datei erneut in der Vorschau. Prüfe Tabellen, Diagramm und Codeblöcke auch bei schmalem Editorfenster.
+
+### T006: Mitarbeiter eines Projekts (vorgeschlagen, nicht ausgeführt)
+
+Die folgenden Prüfungen sind vorgeschlagen und in diesem Stand nicht ausgeführt. Für Schritt 1 muss vorab eine Zuordnung in der Tabelle `project_employee_assignments` vorhanden sein, weil T005 noch keinen Endpunkt zum Anlegen bereitstellt.
+
+1. Rufe `GET /projects/1/employees` aus [SampleRequests.http](../SampleRequests.http) für ein Projekt mit Zuordnung auf. Prüfe `200 OK`, `projectId`, `designation` und je Eintrag `employeeId` und `role`.
+2. Rufe `GET /projects/{id}/employees` für ein vorhandenes Projekt ohne Zuordnung auf. Prüfe `200 OK` und `"employees": []`.
+3. Rufe `GET /projects/999999/employees` auf. Prüfe `404 Not Found`, dass `detail` die ID 999999 nennt, und dass `projectId` gesetzt ist.
+4. Rufe `GET /projects/1/employees` einmal ohne Authorization-Header und einmal mit einem ungültigen Token auf. Prüfe jeweils `401 Unauthorized`.
 
 > 💬 **Rückmeldung:** ☐ Prüfschritte ausreichend ☐ ändern ☐ ablehnen · Anmerkungen: …
 

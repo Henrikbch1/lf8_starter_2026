@@ -39,3 +39,12 @@ Authorization: Bearer {{token}}
 ###
 GET http://localhost:8089/qualifications
 Authorization: Bearer {{token}}
+
+### T006 - Get the employees of a project (authenticated)
+
+# Retrieves the employees assigned to a project with their role.
+# Uses the token stored by GetToken.http. Replace 1 with the ID of an existing project.
+# Expected: 200 OK with projectId, designation and employees, or an empty list if none are assigned.
+GET http://localhost:8080/projects/1/employees
+Accept: application/json
+Authorization: Bearer {{token}}
