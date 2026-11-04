@@ -11,8 +11,11 @@ import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -113,6 +116,41 @@ public class ProjectController {
         ProjectEntity project = projectService.findProjectById(id);
         ProjectGetDto projectDto = projectMapper.toDto(project);
         return ResponseEntity.ok(projectDto);
+    }
+
+    /**
+     * Retrieves the employees assigned to a project.
+     *
+     * @param id the ID of the project whose employees are requested
+     * @return the project ID, its designation and its assigned employees with HTTP status 200 OK
+     * @throws ProjectNotFoundException if no project exists with the given ID
+     */
+    @Operation(
+            summary = "Get the employees of a project",
+            description = "Returns the employees assigned to a project with their role. "
+                    + "If the project has no assigned employees, an empty list is returned.")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project employees retrieved successfully",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ProjectEmployeesGetDto.class)))
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Project with the specified ID not found",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)))
+    @GetMapping("/{id}/employees")
+    public ResponseEntity<ProjectEmployeesGetDto> findProjectEmployees(@PathVariable final Long id) {
+        final ProjectEntity project = projectService.findProjectById(id);
+        final List<ProjectEmployeeGetDto> employees = projectService.findEmployeeAssignments(project)
+                .stream()
+                .map(ProjectEmployeeGetDto::from)
+                .toList();
+        return ResponseEntity.ok(
+                new ProjectEmployeesGetDto(project.getId(), project.getDesignation(), employees));
     }
 
     /**

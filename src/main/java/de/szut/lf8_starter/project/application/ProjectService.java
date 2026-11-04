@@ -3,8 +3,10 @@ package de.szut.lf8_starter.project.application;
 import de.szut.lf8_starter.employee.EmployeeClient;
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.ProjectEmployeeAssignment;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
+import de.szut.lf8_starter.project.persistence.ProjectEmployeeAssignmentRepository;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -16,21 +18,25 @@ public class ProjectService {
   private final ProjectRepository projectRepository;
   private final EmployeeClient employeeClient;
   private final ProjectMapper projectMapper;
+  private final ProjectEmployeeAssignmentRepository projectEmployeeAssignmentRepository;
 
   /**
-   * Creates a service using the project repository and employee client.
+   * Creates a service using the project repository, employee client and assignment repository.
    *
    * @param projectRepository repository used to persist projects
    * @param employeeClient client used to verify responsible employees
    * @param projectMapper mapper used to convert project entities into DTOs
+   * @param projectEmployeeAssignmentRepository repository used to read project employee assignments
    */
   public ProjectService(
       final ProjectRepository projectRepository,
       final EmployeeClient employeeClient,
-      ProjectMapper projectMapper) {
+      ProjectMapper projectMapper,
+      final ProjectEmployeeAssignmentRepository projectEmployeeAssignmentRepository) {
     this.projectRepository = projectRepository;
     this.employeeClient = employeeClient;
     this.projectMapper = projectMapper;
+    this.projectEmployeeAssignmentRepository = projectEmployeeAssignmentRepository;
   }
 
   /**
@@ -75,6 +81,16 @@ public class ProjectService {
             () ->
                 // Throw an exception if no project is found with the given ID.
                 new ProjectNotFoundException(projectId));
+  }
+
+  /**
+   * Retrieves the employee assignments of an existing project.
+   *
+   * @param project the project whose assignments are requested
+   * @return the assignments of the project, or an empty list if it has none
+   */
+  public List<ProjectEmployeeAssignment> findEmployeeAssignments(final ProjectEntity project) {
+    return projectEmployeeAssignmentRepository.findAllByProjectId(project.getId());
   }
 
   /**

@@ -2,6 +2,7 @@ package de.szut.lf8_starter.project;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -19,8 +20,10 @@ import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
 import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
 import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.ProjectEmployeeAssignment;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
+import de.szut.lf8_starter.project.persistence.ProjectEmployeeAssignmentRepository;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.Nested;
@@ -43,6 +46,10 @@ class ProjectServiceTest {
     private static final String EMPLOYEE_FIRST_NAME = "Max";
     private static final String EMPLOYEE_LAST_NAME = "Mustermann";
     private static final String EMPLOYEE_SERVICE_CONNECTION_ERROR = "connection refused";
+    private static final long FIRST_EMPLOYEE_ID = 101L;
+    private static final long SECOND_EMPLOYEE_ID = 102L;
+    private static final long FIRST_QUALIFICATION_ID = 30L;
+    private static final long SECOND_QUALIFICATION_ID = 40L;
     private static final LocalDate PROJECT_START_DATE = LocalDate.of(2026, 11, 1);
     private static final LocalDate PROJECT_END_DATE = LocalDate.of(2026, 12, 31);
 
@@ -54,6 +61,9 @@ class ProjectServiceTest {
 
     @Mock
     private ProjectMapper projectMapper;
+
+    @Mock
+    private ProjectEmployeeAssignmentRepository projectEmployeeAssignmentRepository;
 
     @InjectMocks
     private ProjectService underTest;
@@ -192,6 +202,46 @@ class ProjectServiceTest {
             assertThatThrownBy(action).isInstanceOf(EmployeeServiceUnavailableException.class);
             verify(employeeClient).findById(RESPONSIBLE_EMPLOYEE_ID);
             verify(projectRepository, never()).save(any(ProjectEntity.class));
+        }
+    }
+
+    @Nested
+    class FindEmployeeAssignments {
+
+        @Test
+        void findEmployeeAssignments_projectWithAssignments_returnsAssignmentsOfProject() {
+            // Arrange
+            ProjectEntity project = new ProjectEntity();
+            project.setId(FIRST_PROJECT_ID);
+            ProjectEmployeeAssignment firstAssignment =
+                    new ProjectEmployeeAssignment(project, FIRST_EMPLOYEE_ID, FIRST_QUALIFICATION_ID);
+            ProjectEmployeeAssignment secondAssignment =
+                    new ProjectEmployeeAssignment(project, SECOND_EMPLOYEE_ID, SECOND_QUALIFICATION_ID);
+            when(projectEmployeeAssignmentRepository.findAllByProjectId(FIRST_PROJECT_ID))
+                    .thenReturn(List.of(firstAssignment, secondAssignment));
+            // Act
+            List<ProjectEmployeeAssignment> assignments = underTest.findEmployeeAssignments(project);
+            // Assert
+            assertThat(assignments)
+                    .extracting(ProjectEmployeeAssignment::getEmployeeId, ProjectEmployeeAssignment::getQualificationId)
+                    .containsExactly(
+                            tuple(FIRST_EMPLOYEE_ID, FIRST_QUALIFICATION_ID),
+                            tuple(SECOND_EMPLOYEE_ID, SECOND_QUALIFICATION_ID));
+            verify(projectEmployeeAssignmentRepository).findAllByProjectId(FIRST_PROJECT_ID);
+        }
+
+        @Test
+        void findEmployeeAssignments_projectWithoutAssignments_returnsEmptyList() {
+            // Arrange
+            ProjectEntity project = new ProjectEntity();
+            project.setId(SECOND_PROJECT_ID);
+            when(projectEmployeeAssignmentRepository.findAllByProjectId(SECOND_PROJECT_ID))
+                    .thenReturn(List.of());
+            // Act
+            List<ProjectEmployeeAssignment> assignments = underTest.findEmployeeAssignments(project);
+            // Assert
+            assertThat(assignments).isEmpty();
+            verify(projectEmployeeAssignmentRepository).findAllByProjectId(SECOND_PROJECT_ID);
         }
     }
 
