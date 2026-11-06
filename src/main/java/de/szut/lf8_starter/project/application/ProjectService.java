@@ -2,37 +2,25 @@ package de.szut.lf8_starter.project.application;
 
 import de.szut.lf8_starter.employee.EmployeeClient;
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
-import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.ProjectEmployeeAssignment;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
-import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
+import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
+import de.szut.lf8_starter.project.persistence.ProjectEmployeeAssignmentRepository;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /** Coordinates project creation and its required validations. */
 @Service
+@RequiredArgsConstructor
 public class ProjectService {
 
   private final ProjectRepository projectRepository;
   private final EmployeeClient employeeClient;
   private final ProjectMapper projectMapper;
-
-  /**
-   * Creates a service using the project repository and employee client.
-   *
-   * @param projectRepository repository used to persist projects
-   * @param employeeClient client used to verify responsible employees
-   * @param projectMapper mapper used to convert project entities into DTOs
-   */
-  public ProjectService(
-      final ProjectRepository projectRepository,
-      final EmployeeClient employeeClient,
-      ProjectMapper projectMapper) {
-    this.projectRepository = projectRepository;
-    this.employeeClient = employeeClient;
-    this.projectMapper = projectMapper;
-  }
+  private final ProjectEmployeeAssignmentRepository projectEmployeeAssignmentRepository;
 
   /**
    * Validates and persists a project.
@@ -54,9 +42,9 @@ public class ProjectService {
   }
 
   /**
-   * Retrieves all projects from the database and converts them into response DTOs.
+   * Retrieves all projects from the database.
    *
-   * @return a list of all projects as ProjectGetDto objects, or an empty list if no projects exist
+   * @return all projects as entities, or an empty list if no projects exist
    */
   public List<ProjectEntity> findAllProjects() {
     return projectRepository.findAll();
@@ -67,7 +55,7 @@ public class ProjectService {
    *
    * @param projectId the ID of the project to find
    * @return the project entity if it exists
-   * @throws EntityNotFoundException if no project exists with the given ID
+   * @throws ProjectNotFoundException if no project exists with the given ID
    */
   public ProjectEntity findProjectById(Long projectId) {
     return projectRepository
@@ -76,5 +64,28 @@ public class ProjectService {
             () ->
                 // Throw an exception if no project is found with the given ID.
                 new ProjectNotFoundException(projectId));
+  }
+
+  /**
+   * Retrieves the employee assignments of an existing project.
+   *
+   * @param project the project whose assignments are requested
+   * @return the assignments of the project, or an empty list if it has none
+   */
+  public List<ProjectEmployeeAssignment> findEmployeeAssignments(final ProjectEntity project) {
+    return projectEmployeeAssignmentRepository.findAllByProjectId(project.getId());
+  }
+
+  /**
+   * Deletes a project by its ID.
+   *
+   * @param projectId the ID of the project to delete
+   * @throws ProjectNotFoundException if the project does not exist
+   */
+  public void deleteById(final Long projectId){
+    // Find the project and throw an exception if it does not exist.
+    ProjectEntity project = findProjectById(projectId);
+    // Delete the existing project from the database.
+    projectRepository.delete(project);
   }
 }
