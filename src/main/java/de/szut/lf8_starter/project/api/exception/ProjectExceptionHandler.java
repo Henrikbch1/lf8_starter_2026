@@ -1,6 +1,6 @@
-package de.szut.lf8_starter.project.api;
+package de.szut.lf8_starter.project.api.exception;
 
-import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
+import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;

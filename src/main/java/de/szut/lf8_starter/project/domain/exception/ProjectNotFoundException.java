@@ -1,4 +1,4 @@
-package de.szut.lf8_starter.project.domain;
+package de.szut.lf8_starter.project.domain.exception;
 
 import lombok.Getter;
 

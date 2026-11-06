@@ -5,14 +5,22 @@ import java.util.List;
 
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
+import de.szut.lf8_starter.project.api.dto.ProjectCreateDto;
+import de.szut.lf8_starter.project.api.dto.ProjectEmployeeGetDto;
+import de.szut.lf8_starter.project.api.dto.ProjectEmployeesGetDto;
+import de.szut.lf8_starter.project.api.dto.ProjectGetDto;
 import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
-import de.szut.lf8_starter.project.domain.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
-import de.szut.lf8_starter.project.domain.ProjectNotFoundException;
+import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,21 +36,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  */
 @RestController
 @RequestMapping("/projects")
+@RequiredArgsConstructor
 public class ProjectController {
 
     private final ProjectService projectService;
     private final ProjectMapper projectMapper;
-
-    /**
-     * Creates a controller using the project service and mapper.
-     *
-     * @param projectService service that validates and persists projects
-     * @param projectMapper mapper between project requests, entities, and responses
-     */
-    public ProjectController(final ProjectService projectService, final ProjectMapper projectMapper) {
-        this.projectService = projectService;
-        this.projectMapper = projectMapper;
-    }
 
     /**
      * Creates a project and returns its representation and resource location.
@@ -113,6 +111,41 @@ public class ProjectController {
         ProjectEntity project = projectService.findProjectById(id);
         ProjectGetDto projectDto = projectMapper.toDto(project);
         return ResponseEntity.ok(projectDto);
+    }
+
+    /**
+     * Retrieves the employees assigned to a project.
+     *
+     * @param id the ID of the project whose employees are requested
+     * @return the project ID, its designation and its assigned employees with HTTP status 200 OK
+     * @throws ProjectNotFoundException if no project exists with the given ID
+     */
+    @Operation(
+            summary = "Get the employees of a project",
+            description = "Returns the employees assigned to a project with their role. "
+                    + "If the project has no assigned employees, an empty list is returned.")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Project employees retrieved successfully",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ProjectEmployeesGetDto.class)))
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Project with the specified ID not found",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)))
+    @GetMapping("/{id}/employees")
+    public ResponseEntity<ProjectEmployeesGetDto> findProjectEmployees(@PathVariable final Long id) {
+        final ProjectEntity project = projectService.findProjectById(id);
+        final List<ProjectEmployeeGetDto> employees = projectService.findEmployeeAssignments(project)
+                .stream()
+                .map(ProjectEmployeeGetDto::from)
+                .toList();
+        return ResponseEntity.ok(
+                new ProjectEmployeesGetDto(project.getId(), project.getDesignation(), employees));
     }
 
     /**
