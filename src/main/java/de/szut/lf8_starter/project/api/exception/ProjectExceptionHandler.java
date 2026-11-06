@@ -27,4 +27,38 @@ public class ProjectExceptionHandler {
     problem.setProperty("projectId", exception.getProjectId());
     return problem;
   }
+
+  /**
+   * Handles conflicts caused by duplicate or overlapping employee assignments.
+   *
+   * @param exception the exception describing the assignment conflict
+   * @return a problem detail response with HTTP status 409
+   */
+  @ExceptionHandler(ProjectEmployeeConflictException.class)
+  public ProblemDetail handleEmployeeConflict(
+          final ProjectEmployeeConflictException exception) {
+
+    ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT, exception.getMessage());
+
+    problem.setTitle("Employee assignment conflict");
+    return problem;
+  }
+
+  /**
+   * Handles employee assignments with a missing required qualification.
+   *
+   * @param exception the exception describing the missing qualification
+   * @return a problem detail response with HTTP status 422
+   */
+  @ExceptionHandler(EmployeeQualificationException.class)
+  public ProblemDetail handleEmployeeQualification(
+          final EmployeeQualificationException exception) {
+
+    ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNPROCESSABLE_ENTITY, exception.getMessage());
+
+    problem.setTitle("Employee qualification missing");
+    return problem;
+  }
 }
