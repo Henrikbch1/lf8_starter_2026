@@ -23,6 +23,7 @@ import de.szut.lf8_starter.project.domain.ProjectEmployeeAssignment;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
+import de.szut.lf8_starter.project.domain.exception.ResponsibleEmployeeNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectEmployeeAssignmentRepository;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import org.assertj.core.api.ThrowableAssert;
@@ -40,6 +41,7 @@ class ProjectServiceTest {
     private static final long SECOND_PROJECT_ID = 2L;
     private static final long MISSING_PROJECT_ID = 999L;
     private static final long RESPONSIBLE_EMPLOYEE_ID = 1L;
+    private static final long CHANGED_RESPONSIBLE_EMPLOYEE_ID = 2L;
     private static final String PROJECT_ALPHA_DESIGNATION = "Project Alpha";
     private static final String PROJECT_BETA_DESIGNATION = "Project Beta";
     private static final String PROJECT_GAMMA_DESIGNATION = "Project Gamma";
@@ -201,6 +203,127 @@ class ProjectServiceTest {
             // Assert
             assertThatThrownBy(action).isInstanceOf(EmployeeServiceUnavailableException.class);
             verify(employeeClient).findById(RESPONSIBLE_EMPLOYEE_ID);
+            verify(projectRepository, never()).save(any(ProjectEntity.class));
+        }
+    }
+
+    @Nested
+    class Update {
+
+        @Test
+        void update_changedResponsibleEmployee_verifiesAndSavesChanges() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            project.setId(FIRST_PROJECT_ID);
+            project.setDesignation(PROJECT_ALPHA_DESIGNATION);
+            ProjectEntity changes = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            changes.setResponsibleEmployeeId(CHANGED_RESPONSIBLE_EMPLOYEE_ID);
+            when(projectRepository.findById(FIRST_PROJECT_ID)).thenReturn(Optional.of(project));
+            when(employeeClient.findById(CHANGED_RESPONSIBLE_EMPLOYEE_ID))
+                    .thenReturn(Optional.of(new EmployeeDto(
+                            CHANGED_RESPONSIBLE_EMPLOYEE_ID,
+                            EMPLOYEE_FIRST_NAME,
+                            EMPLOYEE_LAST_NAME,
+                            List.of())));
+            when(projectRepository.save(project)).thenReturn(project);
+            // Act
+            ProjectEntity result = underTest.update(FIRST_PROJECT_ID, changes);
+            // Assert
+            assertThat(result).isSameAs(project);
+            verify(employeeClient).findById(CHANGED_RESPONSIBLE_EMPLOYEE_ID);
+            verify(projectMapper).applyUpdate(project, changes);
+            verify(projectRepository).save(project);
+        }
+
+        @Test
+        void update_unchangedResponsibleEmployee_skipsEmployeeLookup() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            project.setId(FIRST_PROJECT_ID);
+            ProjectEntity changes = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            when(projectRepository.findById(FIRST_PROJECT_ID)).thenReturn(Optional.of(project));
+            when(projectRepository.save(project)).thenReturn(project);
+            // Act
+            ProjectEntity result = underTest.update(FIRST_PROJECT_ID, changes);
+            // Assert
+            assertThat(result).isSameAs(project);
+            verifyNoInteractions(employeeClient);
+            verify(projectMapper).applyUpdate(project, changes);
+            verify(projectRepository).save(project);
+        }
+
+        @Test
+        void update_missingProject_throwsProjectNotFoundException() {
+            // Arrange
+            ProjectEntity changes = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            when(projectRepository.findById(MISSING_PROJECT_ID)).thenReturn(Optional.empty());
+            // Act
+            ThrowableAssert.ThrowingCallable action =
+                    () -> underTest.update(MISSING_PROJECT_ID, changes);
+            // Assert
+            assertThatThrownBy(action).isInstanceOf(ProjectNotFoundException.class);
+            verifyNoInteractions(employeeClient, projectMapper);
+            verify(projectRepository, never()).save(any(ProjectEntity.class));
+        }
+
+        @Test
+        void update_invalidPeriod_throwsInvalidProjectPeriodException() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            project.setId(FIRST_PROJECT_ID);
+            ProjectEntity changes = projectWithPeriod(PROJECT_END_DATE, PROJECT_START_DATE);
+            when(projectRepository.findById(FIRST_PROJECT_ID)).thenReturn(Optional.of(project));
+            // Act
+            ThrowableAssert.ThrowingCallable action =
+                    () -> underTest.update(FIRST_PROJECT_ID, changes);
+            // Assert
+            assertThatThrownBy(action).isInstanceOf(InvalidProjectPeriodException.class);
+            verifyNoInteractions(employeeClient, projectMapper);
+            verify(projectRepository, never()).save(any(ProjectEntity.class));
+        }
+
+        @Test
+        void update_unknownChangedResponsibleEmployee_throwsResponsibleEmployeeNotFoundException() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            project.setId(FIRST_PROJECT_ID);
+            project.setDesignation(PROJECT_ALPHA_DESIGNATION);
+            ProjectEntity changes = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            changes.setResponsibleEmployeeId(CHANGED_RESPONSIBLE_EMPLOYEE_ID);
+            when(projectRepository.findById(FIRST_PROJECT_ID)).thenReturn(Optional.of(project));
+            when(employeeClient.findById(CHANGED_RESPONSIBLE_EMPLOYEE_ID)).thenReturn(Optional.empty());
+            // Act
+            ThrowableAssert.ThrowingCallable action =
+                    () -> underTest.update(FIRST_PROJECT_ID, changes);
+            // Assert
+            assertThatThrownBy(action).isInstanceOf(ResponsibleEmployeeNotFoundException.class);
+            assertThat(project.getDesignation()).isEqualTo(PROJECT_ALPHA_DESIGNATION);
+            verify(employeeClient).findById(CHANGED_RESPONSIBLE_EMPLOYEE_ID);
+            verifyNoInteractions(projectMapper);
+            verify(projectRepository, never()).save(any(ProjectEntity.class));
+        }
+
+        @Test
+        void update_employeeServiceUnavailable_leavesProjectUnchanged() {
+            // Arrange
+            ProjectEntity project = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            project.setId(FIRST_PROJECT_ID);
+            project.setDesignation(PROJECT_ALPHA_DESIGNATION);
+            ProjectEntity changes = projectWithPeriod(PROJECT_START_DATE, PROJECT_END_DATE);
+            changes.setResponsibleEmployeeId(CHANGED_RESPONSIBLE_EMPLOYEE_ID);
+            when(projectRepository.findById(FIRST_PROJECT_ID)).thenReturn(Optional.of(project));
+            when(employeeClient.findById(CHANGED_RESPONSIBLE_EMPLOYEE_ID))
+                    .thenThrow(new EmployeeServiceUnavailableException(
+                            new RuntimeException(EMPLOYEE_SERVICE_CONNECTION_ERROR)));
+            // Act
+            ThrowableAssert.ThrowingCallable action =
+                    () -> underTest.update(FIRST_PROJECT_ID, changes);
+            // Assert
+            assertThatThrownBy(action).isInstanceOf(EmployeeServiceUnavailableException.class);
+            assertThat(project.getDesignation()).isEqualTo(PROJECT_ALPHA_DESIGNATION);
+            assertThat(project.getResponsibleEmployeeId()).isEqualTo(RESPONSIBLE_EMPLOYEE_ID);
+            verify(employeeClient).findById(CHANGED_RESPONSIBLE_EMPLOYEE_ID);
+            verifyNoInteractions(projectMapper);
             verify(projectRepository, never()).save(any(ProjectEntity.class));
         }
     }
