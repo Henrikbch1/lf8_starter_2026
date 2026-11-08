@@ -243,7 +243,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary); }
 
 ## 1. Kurzbeschreibung
 
-Die geschützte Projekt-API kann Projekte anlegen, alle gespeicherten Projekte abrufen und ein einzelnes Projekt anhand seiner ID zurückgeben. Beim Anlegen werden Eingabedaten und Zeitraum geprüft. Außerdem muss der verantwortliche Mitarbeiter im Employee-Service existieren.
+Die geschützte Projekt-API kann Projekte anlegen, bestehende Projekte ändern, alle gespeicherten Projekte abrufen und ein einzelnes Projekt anhand seiner ID zurückgeben. Beim Anlegen und Ändern werden Eingabedaten und Zeitraum geprüft. Beim Anlegen sowie bei einem Wechsel der verantwortlichen Person wird außerdem der Employee-Service abgefragt.
 
 Zusätzlich liefert `GET /projects/{id}/employees` die einem Projekt zugeordneten Mitarbeiter mit ihrer Rolle. Die Rolle ist die ID einer Qualifikation, die im Employee-Service definiert ist. Hat das Projekt keine Zuordnung, ist `employees` eine leere Liste.
 
@@ -287,11 +287,12 @@ flowchart TD
 | Methode | URI | Erfolgsantwort | Fehlerantworten |
 |---|---|---|---|
 | `POST` | `/projects` | `201 Created`, Projekt in `ProjectGetDto`, `Location`-Header mit URI der Ressource | `400`, `401`, `404`, `422`, `503` |
+| `PUT` | `/projects/{id}` | `200 OK`, aktualisiertes Projekt als `ProjectGetDto` | `400`, `401`, `404`, `422`, `503` |
 | `GET` | `/projects` | `200 OK`, Liste gespeicherter Projekte (bei leerem Bestand `[]`) | `401` |
 | `GET` | `/projects/{id}` | `200 OK`, Projekt als `ProjectGetDto` | `401`, `404` |
 | `GET` | `/projects/{id}/employees` | `200 OK`, Projekt-ID, Bezeichnung und Mitarbeiter mit Rolle (ohne Zuordnung `employees: []`) | `401`, `404` |
 
-Bei `POST /projects` meldet `400` ungültige oder unvollständige Eingaben. `404` bezeichnet einen nicht gefundenen verantwortlichen Mitarbeiter oder ein nicht vorhandenes Projekt bei `GET /projects/{id}` und `GET /projects/{id}/employees`. `422` steht für einen Start nach dem geplanten Ende. `503` bedeutet, dass der Employee-Service nicht erreichbar ist.
+Bei `POST /projects` meldet `400` ungültige oder unvollständige Eingaben. `PUT /projects/{id}` nutzt dieselben Pflichtfelder und Validierungen; `404` bezeichnet dort ein nicht vorhandenes Projekt. Ein unbekannter, neu gesetzter verantwortlicher Mitarbeiter ergibt beim Ändern `422`, während ein unbekannter Mitarbeiter beim Anlegen weiterhin `404` ergibt. `422` steht außerdem für einen Start nach dem geplanten Ende. `503` bedeutet, dass der Employee-Service nicht erreichbar ist.
 
 > 💬 **Rückmeldung:** ☐ Ablauf verständlich ☐ ändern ☐ ablehnen · Anmerkungen: …
 
@@ -300,6 +301,8 @@ Bei `POST /projects` meldet `400` ungültige oder unvollständige Eingaben. `404
 ### Request-Felder
 
 Datumswerte müssen das ISO-Format `yyyy-MM-dd` verwenden. `requiredQualificationIds` darf ausgelassen oder als leere Liste übergeben werden. Ohne Wert wird es als leere Menge gespeichert. Für `responsibleEmployeeId` wird geprüft, ob der Mitarbeiter existiert.
+
+Für `PUT /projects/{id}` wird dasselbe Request-DTO wie für die Projekterstellung verwendet. Daher ist auch `customerId` Pflicht; optionale Kontaktdaten und der Zielkommentar können ebenfalls aktualisiert werden. Die gespeicherte Projekt-ID und `actualEndDate` bleiben unverändert. Die Mitarbeiterprüfung erfolgt nur, wenn sich `responsibleEmployeeId` ändert.
 
 | Feld | Typ | Regel |
 |---|---|---|
@@ -332,6 +335,27 @@ Die ID wird beim Speichern vergeben. `actualEndDate` ist bei einem neu angelegte
 ```
 
 Die ID `1` illustriert nur die Antwortform. Der tatsächliche Wert hängt vom Datenbankstand ab.
+
+### Antwort bei erfolgreicher Änderung
+
+`PUT /projects/{id}` antwortet mit `200 OK` und dem aktualisierten Projekt. Die ID in URL und Antwort bleibt identisch. `actualEndDate` wird nicht aus dem Request übernommen und bleibt erhalten.
+
+Der Request verwendet dieselben Felder wie `POST /projects`:
+
+```json
+{
+  "designation": "Rollout Nordlicht aktualisiert",
+  "responsibleEmployeeId": 2,
+  "customerId": 42,
+  "customerContactName": "Mara Beispiel",
+  "goalComment": "Geänderter Projektumfang",
+  "startDate": "2026-11-05",
+  "plannedEndDate": "2027-01-15",
+  "requiredQualificationIds": [1, 2]
+}
+```
+
+Ist das Projekt unbekannt, kommt `404 Not Found`. Ein ungültiger Zeitraum oder ein unbekannter neuer Verantwortlicher ergibt `422 Unprocessable Content`. Bei einem nicht erreichbaren Employee-Service kommt `503 Service Unavailable`; die Änderung wird nicht gespeichert.
 
 ### Antwort bei erfolgreichem Abruf
 
@@ -386,11 +410,12 @@ Der Abruf fragt den Employee-Service nicht ab, die Zuordnungen stammen aus der D
 
 | Datei | Verantwortung |
 |---|---|
-| [ProjectController.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) | REST-Endpunkte, Statuscodes und `Location`-Header, Abruf in [findProjectEmployees](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) |
+| [ProjectController.java](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) | REST-Endpunkte, Statuscodes und `Location`-Header, Änderung in [updateProject](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) und Abruf in [findProjectEmployees](../src/main/java/de/szut/lf8_starter/project/api/ProjectController.java) |
 | [ProjectCreateDto.java](../src/main/java/de/szut/lf8_starter/project/api/dto/ProjectCreateDto.java) | Request-Felder und Jakarta-Validierung |
-| [ProjectService.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) | Zeitraum- und Mitarbeiterprüfung, Persistierung, Abruf der Zuordnungen in [findEmployeeAssignments](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) |
-| [ProjectMapper.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectMapper.java) | DTO-Entity-Zuordnung |
+| [ProjectService.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) | Zeitraum- und Mitarbeiterprüfung, Erstellung, Änderung und Abruf der Zuordnungen in [findEmployeeAssignments](../src/main/java/de/szut/lf8_starter/project/application/ProjectService.java) |
+| [ProjectMapper.java](../src/main/java/de/szut/lf8_starter/project/application/ProjectMapper.java) | DTO-Entity-Zuordnung und Änderung der editierbaren Projektfelder |
 | [ProjectNotFoundException.java](../src/main/java/de/szut/lf8_starter/project/domain/exception/ProjectNotFoundException.java) | Fehler für eine nicht vorhandene Projekt-ID |
+| [ResponsibleEmployeeNotFoundException.java](../src/main/java/de/szut/lf8_starter/project/domain/exception/ResponsibleEmployeeNotFoundException.java) | Fehler für einen unbekannten, neu gesetzten Verantwortlichen bei einer Änderung |
 | [ProjectExceptionHandler.java](../src/main/java/de/szut/lf8_starter/project/api/exception/ProjectExceptionHandler.java) | Problem-Details für nicht gefundene Projekte |
 | [ApiExceptionHandler.java](../src/main/java/de/szut/lf8_starter/common/ApiExceptionHandler.java) | Problem-Details für Eingabe- und Geschäftsfehler |
 | [ProjectEmployeesGetDto.java](../src/main/java/de/szut/lf8_starter/project/api/dto/ProjectEmployeesGetDto.java) | Antwort mit Projekt-ID, Bezeichnung und Mitarbeiterliste |
@@ -415,8 +440,10 @@ Die Requests sind dokumentiert, aber hier nicht gegen laufende Container ausgef�
 8. Führe die drei POST-Negativbeispiele aus: Start nach Ende ergibt `422`, Mitarbeiter-ID `999` ergibt bei unbekanntem Mitarbeiter `404`, fehlende `designation` ergibt `400`.
 9. Prüfe den Grenzfall `startDate` gleich `plannedEndDate`: Er ist gültig, da nur ein Start nach dem Enddatum abgelehnt wird.
 10. Prüfe in einer isolierten Testumgebung mit nicht erreichbarem Employee-Service den Fehler `503`.
-11. Sende einen Projekt-Request ohne Authorization-Header oder mit abgelaufenem Token und prüfe `401`.
-12. Öffne die Dokumentation und die Request-Datei erneut in der Vorschau. Prüfe Tabellen, Diagramm und Codeblöcke auch bei schmalem Editorfenster.
+11. Sende einen gültigen `PUT /projects/{id}` für ein vorhandenes Projekt. Prüfe `200 OK`, unveränderte Projekt-ID und aktualisierte Felder. Bei geändertem Verantwortlichen wird dessen Existenz im Employee-Service geprüft.
+12. Prüfe bei `PUT /projects/{id}` die Fehlerfälle: unbekannte Projekt-ID `404`, unbekannter neuer Verantwortlicher oder Start nach Ende `422`, ungültige Pflichtfelder oder Datumsformate `400`, nicht erreichbarer Employee-Service `503` ohne gespeicherte Änderung.
+13. Sende einen Projekt-Request ohne Authorization-Header oder mit abgelaufenem Token und prüfe `401`.
+14. Öffne die Dokumentation und die Request-Datei erneut in der Vorschau. Prüfe Tabellen, Diagramm und Codeblöcke auch bei schmalem Editorfenster.
 
 ### T006: Mitarbeiter eines Projekts (vorgeschlagen, nicht ausgeführt)
 
