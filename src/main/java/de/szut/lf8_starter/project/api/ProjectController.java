@@ -14,6 +14,7 @@ import de.szut.lf8_starter.project.application.ProjectService;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
+import de.szut.lf8_starter.project.domain.exception.ResponsibleEmployeeNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -71,6 +73,37 @@ public class ProjectController {
 
         return ResponseEntity.created(location).body(createdProject);
     }
+
+    /**
+     * Updates an existing project without changing its ID or actual end date.
+     *
+     * @param id the ID of the project to update
+     * @param request validated replacement data for the project
+     * @return the updated project
+     * @throws ProjectNotFoundException if no project exists with the given ID
+     * @throws InvalidProjectPeriodException if the start date is after the planned end date
+     * @throws ResponsibleEmployeeNotFoundException if a changed responsible employee does not exist
+     * @throws EmployeeServiceUnavailableException if the employee service is unavailable
+     */
+    @Operation(
+            summary = "Update a project",
+            description = "Replaces the editable project data and verifies a changed responsible employee.")
+    @ApiResponse(responseCode = "200", description = "Project updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+    @ApiResponse(responseCode = "404", description = "Project with the specified ID not found")
+    @ApiResponse(responseCode = "422", description = "Invalid project period or responsible employee not found")
+    @ApiResponse(responseCode = "503", description = "Employee service unavailable")
+    @PutMapping("/{id}")
+    public ResponseEntity<ProjectGetDto> updateProject(
+            @PathVariable final Long id,
+            @Valid @RequestBody final ProjectCreateDto request) {
+        final ProjectEntity updatedProject = projectService.update(
+                id,
+                projectMapper.fromCreate(request));
+        return ResponseEntity.ok(projectMapper.toDto(updatedProject));
+    }
+
     /**
      * Retrieves all projects.
      *
