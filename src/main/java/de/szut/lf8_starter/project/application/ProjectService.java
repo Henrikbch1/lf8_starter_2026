@@ -6,13 +6,16 @@ import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.employee.QualificationDto;
 import de.szut.lf8_starter.project.domain.ProjectEmployeeAssignment;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
+import de.szut.lf8_starter.project.domain.exception.EmployeeQualificationException;
 import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.exception.ProjectEmployeeConflictException;
 import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectEmployeeAssignmentRepository;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
 import org.springframework.stereotype.Service;
 
 /** Coordinates project creation and its required validations. */
@@ -93,76 +96,85 @@ public class ProjectService {
   }
 
   /**
-   * Assigns an employee to an existing project after validating the employee, qualification,
-   * duplicate assignments, and overlapping project periods.
+   * Assigns an employee to a project after validating the employee,
+   * qualification, duplicate assignments, and overlapping project periods.
    *
    * @param projectId the ID of the project
-   * @param employeeId the ID of the employee to assign
-   * @param qualificationId the ID of the qualification used as the employee's role
-   * @return the persisted employee assignment
+   * @param employeeId the ID of the employee
+   * @param qualificationId the ID of the required qualification
+   * @return the saved employee assignment
    * @throws ProjectNotFoundException if the project does not exist
    * @throws EmployeeNotFoundException if the employee does not exist
-   * @throws IllegalArgumentException if the employee lacks the qualification
-   * @throws IllegalStateException if the assignment already exists or project periods overlap
+   * @throws EmployeeQualificationException if the employee lacks the qualification
+   * @throws ProjectEmployeeConflictException if a duplicate or overlapping assignment exists
+   * @throws EmployeeServiceUnavailableException if the employee service is unavailable
    */
   public ProjectEmployeeAssignment assignEmployee(
-      final Long projectId, final Long employeeId, final Long qualificationId) {
+          final Long projectId,
+          final Long employeeId,
+          final Long qualificationId) {
 
     // Verify that the requested project exists.
     ProjectEntity project = findProjectById(projectId);
 
     // Retrieve the employee from the external Employee-Service.
-    EmployeeDto employee =
-        employeeClient
-            .findById(employeeId)
+    EmployeeDto employee = employeeClient.findById(employeeId)
             .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
 
     // Verify that the employee has the required qualification.
-    boolean hasQualification =
-        employee.skillSet() != null
+    boolean hasQualification = employee.skillSet() != null
             && employee.skillSet().stream()
-                .map(QualificationDto::id)
-                .anyMatch(id -> id == qualificationId.longValue());
+            .map(QualificationDto::id)
+            .anyMatch(id -> id == qualificationId.longValue());
 
     if (!hasQualification) {
-      throw new IllegalArgumentException(
-          "Employee " + employeeId + " does not have qualification " + qualificationId);
+      throw new EmployeeQualificationException(
+              "Employee " + employeeId
+                      + " does not have qualification " + qualificationId);
     }
 
     // Prevent assigning the same employee twice to the same project.
-    if (projectEmployeeAssignmentRepository.existsByProjectIdAndEmployeeId(projectId, employeeId)) {
-      throw new IllegalStateException(
-          "Employee " + employeeId + " is already assigned to project " + projectId);
+    if (projectEmployeeAssignmentRepository.existsByProjectIdAndEmployeeId(
+            projectId, employeeId)) {
+
+      throw new ProjectEmployeeConflictException(
+              "Employee " + employeeId
+                      + " is already assigned to project " + projectId);
     }
 
-    // Check the planned periods of all existing assignments.
+    // Retrieve the planned period of the requested project.
     LocalDate newStart = project.getStartDate();
     LocalDate newEnd = project.getPlannedEndDate();
 
+    // Retrieve all existing assignments of the employee.
     List<ProjectEmployeeAssignment> assignments =
-        projectEmployeeAssignmentRepository.findAllByEmployeeId(employeeId);
+            projectEmployeeAssignmentRepository.findAllByEmployeeId(employeeId);
 
     for (ProjectEmployeeAssignment assignment : assignments) {
+
       ProjectEntity existingProject = assignment.getProject();
 
       LocalDate existingStart = existingProject.getStartDate();
       LocalDate existingEnd = existingProject.getPlannedEndDate();
 
       // Both start and end dates are inclusive.
-      boolean overlaps = !existingEnd.isBefore(newStart) && !existingStart.isAfter(newEnd);
+      boolean overlaps = !existingEnd.isBefore(newStart)
+              && !existingStart.isAfter(newEnd);
 
       if (overlaps) {
-        throw new IllegalStateException(
-            "Employee "
-                + employeeId
-                + " is already assigned to overlapping project "
-                + existingProject.getId());
+        throw new ProjectEmployeeConflictException(
+                "Employee " + employeeId
+                        + " is already assigned to overlapping project "
+                        + existingProject.getId());
       }
     }
 
     // Persist the assignment only after all validations succeed.
     ProjectEmployeeAssignment assignment =
-        new ProjectEmployeeAssignment(project, employeeId, qualificationId);
+            new ProjectEmployeeAssignment(
+                    project,
+                    employeeId,
+                    qualificationId);
 
     return projectEmployeeAssignmentRepository.save(assignment);
   }
