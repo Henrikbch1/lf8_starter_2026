@@ -343,4 +343,29 @@ class ProjectEmployeeAssignmentIntegrationTest extends AbstractIntegrationTest {
                 .findAllByProjectId(project.getId())
                 .isEmpty());
     }
+
+    /**
+     * Verifies that an assignment request with an invalid JWT
+     * returns HTTP 401 Unauthorized.
+     *
+     * @throws Exception if the HTTP request execution fails
+     */
+    @Test
+    void assignEmployee_invalidToken_returns401() throws Exception {
+
+        // Arrange: Prepare an invalid JWT token.
+        String invalidToken = "invalid.jwt.token";
+
+        // Act and Assert: Send the request with an invalid Bearer token.
+        mockMvc.perform(post("/projects/{projectId}/employees", 1L)
+                        .header("Authorization", "Bearer " + invalidToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "employeeId": 101,
+                              "qualificationId": 30
+                            }
+                            """))
+                .andExpect(status().isUnauthorized());
+    }
 }
