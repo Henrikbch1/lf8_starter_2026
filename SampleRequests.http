@@ -48,3 +48,17 @@ Authorization: Bearer {{token}}
 GET http://localhost:8080/projects/1/employees
 Accept: application/json
 Authorization: Bearer {{token}}
+
+### T005 - Assign an employee to a project (authenticated)
+
+# Assigns an employee to an existing project using a qualification.
+# Replace the IDs with valid project, employee and qualification IDs.
+# Expected: 201 Created if the assignment is successful.
+POST http://localhost:8080/projects/1/employees
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "employeeId": 101,
+  "qualificationId": 30
+}
