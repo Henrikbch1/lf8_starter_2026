@@ -5,7 +5,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
 import de.szut.lf8_starter.AbstractIntegrationTest;
 import de.szut.lf8_starter.employee.EmployeeDto;
 import de.szut.lf8_starter.employee.QualificationDto;
@@ -299,6 +299,44 @@ class ProjectEmployeeAssignmentIntegrationTest extends AbstractIntegrationTest {
                 // Assert: Verify that the error message contains the employee ID.
                 .andExpect(jsonPath("$.detail").value(
                         org.hamcrest.Matchers.containsString("999")));
+
+        // Assert: Verify that no assignment was persisted.
+        assertTrue(assignmentRepository
+                .findAllByProjectId(project.getId())
+                .isEmpty());
+    }
+
+    /**
+     * Verifies that an unavailable Employee-Service returns HTTP 503
+     * and does not persist an employee assignment.
+     *
+     * @throws Exception if the HTTP request execution fails
+     */
+    @Test
+    void assignEmployee_employeeServiceUnavailable_returns503() throws Exception {
+
+        // Arrange: Create and persist a valid project.
+        ProjectEntity project = createProject(
+                "Employee Service Unavailable Test",
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 12, 31));
+
+        // Arrange: Simulate a connection failure to the Employee-Service.
+        when(employeeClient.findById(EMPLOYEE_ID))
+                .thenThrow(new EmployeeServiceUnavailableException(
+                        new RuntimeException("Connection refused")));
+
+        // Act and Assert: Send the request and expect HTTP 503.
+        mockMvc.perform(post("/projects/{projectId}/employees", project.getId())
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "employeeId": 101,
+                              "qualificationId": 30
+                            }
+                            """))
+                .andExpect(status().isServiceUnavailable());
 
         // Assert: Verify that no assignment was persisted.
         assertTrue(assignmentRepository
