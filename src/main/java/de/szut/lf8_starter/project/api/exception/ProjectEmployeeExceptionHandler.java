@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Getter
 @RestControllerAdvice
-public class ProjectExceptionHandler {
+public class ProjectEmployeeExceptionHandler {
 
   private static final String PROJECT_NOT_FOUND_TITLE = "Project not found";
 

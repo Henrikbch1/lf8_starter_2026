@@ -2,7 +2,11 @@ package de.szut.lf8_starter.project.api;
 
 import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
-import de.szut.lf8_starter.project.api.dto.*;
+import de.szut.lf8_starter.project.api.dto.ProjectCreateDto;
+import de.szut.lf8_starter.project.api.dto.ProjectEmployeeCreateDto;
+import de.szut.lf8_starter.project.api.dto.ProjectEmployeeGetDto;
+import de.szut.lf8_starter.project.api.dto.ProjectEmployeesGetDto;
+import de.szut.lf8_starter.project.api.dto.ProjectGetDto;
 import de.szut.lf8_starter.project.application.ProjectMapper;
 import de.szut.lf8_starter.project.application.ProjectService;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
