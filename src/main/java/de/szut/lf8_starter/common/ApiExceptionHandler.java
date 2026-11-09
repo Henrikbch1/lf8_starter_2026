@@ -7,6 +7,7 @@ import de.szut.lf8_starter.employee.EmployeeNotFoundException;
 import de.szut.lf8_starter.employee.EmployeeServiceUnavailableException;
 import de.szut.lf8_starter.hello.HelloNotFoundException;
 import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
+import de.szut.lf8_starter.project.domain.exception.ResponsibleEmployeeNotFoundException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,17 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(InvalidProjectPeriodException.class)
     public ProblemDetail invalidPeriod(InvalidProjectPeriodException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, exception.getMessage());
+    }
+
+    /**
+     * Handles a project update that names an unknown responsible employee.
+     *
+     * @param exception the exception describing the missing employee
+     * @return a problem detail response with HTTP status 422
+     */
+    @ExceptionHandler(ResponsibleEmployeeNotFoundException.class)
+    public ProblemDetail responsibleEmployeeNotFound(ResponsibleEmployeeNotFoundException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, exception.getMessage());
     }
 

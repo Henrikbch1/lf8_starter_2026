@@ -35,6 +35,23 @@ public class ProjectMapper {
     }
 
     /**
+     * Copies editable project data while preserving the stored ID and actual end date.
+     *
+     * @param project the stored project to update
+     * @param changes the validated editable project data
+     */
+    public void applyUpdate(ProjectEntity project, ProjectEntity changes) {
+        project.setDesignation(changes.getDesignation());
+        project.setResponsibleEmployeeId(changes.getResponsibleEmployeeId());
+        project.setCustomerId(changes.getCustomerId());
+        project.setCustomerContactName(changes.getCustomerContactName());
+        project.setGoalComment(changes.getGoalComment());
+        project.setStartDate(changes.getStartDate());
+        project.setPlannedEndDate(changes.getPlannedEndDate());
+        project.setRequiredQualificationIds(new HashSet<>(changes.getRequiredQualificationIds()));
+    }
+
+    /**
      * Converts an entity into its response representation.
      *
      * @param entity the project entity

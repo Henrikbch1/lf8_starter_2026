@@ -6,9 +6,11 @@ import de.szut.lf8_starter.project.domain.ProjectEmployeeAssignment;
 import de.szut.lf8_starter.project.domain.ProjectEntity;
 import de.szut.lf8_starter.project.domain.exception.InvalidProjectPeriodException;
 import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
+import de.szut.lf8_starter.project.domain.exception.ResponsibleEmployeeNotFoundException;
 import de.szut.lf8_starter.project.persistence.ProjectEmployeeAssignmentRepository;
 import de.szut.lf8_starter.project.persistence.ProjectRepository;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -31,13 +33,35 @@ public class ProjectService {
    * @throws EmployeeNotFoundException if the responsible employee does not exist
    */
   public ProjectEntity create(final ProjectEntity project) {
-    if (project.getStartDate().isAfter(project.getPlannedEndDate())) {
-      throw new InvalidProjectPeriodException(project.getStartDate(), project.getPlannedEndDate());
-    }
+    validateProjectPeriod(project);
 
     employeeClient
         .findById(project.getResponsibleEmployeeId())
         .orElseThrow(() -> new EmployeeNotFoundException(project.getResponsibleEmployeeId()));
+    return projectRepository.save(project);
+  }
+
+  /**
+   * Validates and persists changes to an existing project.
+   *
+   * @param projectId the ID of the project to update
+   * @param changes the editable project data
+   * @return the updated project with its original ID
+   * @throws ProjectNotFoundException if no project exists with the given ID
+   * @throws InvalidProjectPeriodException if the start date is after the planned end date
+   * @throws ResponsibleEmployeeNotFoundException if a changed responsible employee does not exist
+   */
+  public ProjectEntity update(final Long projectId, final ProjectEntity changes) {
+    final ProjectEntity project = findProjectById(projectId);
+    validateProjectPeriod(changes);
+    if (!Objects.equals(project.getResponsibleEmployeeId(), changes.getResponsibleEmployeeId())) {
+      employeeClient
+          .findById(changes.getResponsibleEmployeeId())
+          .orElseThrow(
+              () -> new ResponsibleEmployeeNotFoundException(changes.getResponsibleEmployeeId()));
+    }
+
+    projectMapper.applyUpdate(project, changes);
     return projectRepository.save(project);
   }
 
@@ -87,5 +111,11 @@ public class ProjectService {
     ProjectEntity project = findProjectById(projectId);
     // Delete the existing project from the database.
     projectRepository.delete(project);
+  }
+
+  private static void validateProjectPeriod(final ProjectEntity project) {
+    if (project.getStartDate().isAfter(project.getPlannedEndDate())) {
+      throw new InvalidProjectPeriodException(project.getStartDate(), project.getPlannedEndDate());
+    }
   }
 }
