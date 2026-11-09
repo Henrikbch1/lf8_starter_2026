@@ -40,6 +40,26 @@ Authorization: Bearer {{token}}
 GET http://localhost:8089/qualifications
 Authorization: Bearer {{token}}
 
+### T007 - Update an existing project (authenticated)
+
+# Replace 1 with the ID of an existing project. All ProjectCreateDto required fields are included.
+# Expected: 200 OK with the updated project. The project ID and actualEndDate remain unchanged.
+PUT http://localhost:8080/projects/1
+Accept: application/json
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "designation": "Rollout Nordlicht aktualisiert",
+  "responsibleEmployeeId": 2,
+  "customerId": 42,
+  "customerContactName": "Mara Beispiel",
+  "goalComment": "Geänderter Projektumfang",
+  "startDate": "2026-11-05",
+  "plannedEndDate": "2027-01-15",
+  "requiredQualificationIds": [1, 2]
+}
+
 ### T006 - Get the employees of a project (authenticated)
 
 # Retrieves the employees assigned to a project with their role.
