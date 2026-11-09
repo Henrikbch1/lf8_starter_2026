@@ -1,5 +1,7 @@
 package de.szut.lf8_starter.project.api.exception;
 
+import de.szut.lf8_starter.project.domain.exception.EmployeeQualificationException;
+import de.szut.lf8_starter.project.domain.exception.ProjectEmployeeConflictException;
 import de.szut.lf8_starter.project.domain.exception.ProjectNotFoundException;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
