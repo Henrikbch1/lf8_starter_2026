@@ -19,4 +19,23 @@ public interface ProjectEmployeeAssignmentRepository
      * @return the assignments of the project, or an empty list if it has none
      */
     List<ProjectEmployeeAssignment> findAllByProjectId(Long projectId);
+
+    /**
+     * Checks whether an employee is already assigned to a specific project.
+     * Used to prevent duplicate assignments within the same project.
+     *
+     * @param projectId the ID of the project
+     * @param employeeId the ID of the employee
+     * @return true if the employee is already assigned, otherwise false
+     */
+    boolean existsByProjectIdAndEmployeeId(Long projectId, Long employeeId);
+
+    /**
+     * Finds all project assignments of a specific employee.
+     * Used to check whether project periods overlap before creating a new assignment.
+     *
+     * @param employeeId the ID of the employee
+     * @return all existing project assignments of the employee, or an empty list
+     */
+    List<ProjectEmployeeAssignment> findAllByEmployeeId(Long employeeId);
 }
